@@ -13,7 +13,7 @@ python3 -m unittest discover -s tests -v
 python3 -m compileall -q init.py applied_ai_rig tests
 ```
 
-Result: 48 tests passed. The standard-library compilation check also completed successfully.
+Result: 50 tests passed. The standard-library compilation check also completed successfully.
 
 ## Clean-room walkthrough
 

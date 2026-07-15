@@ -4,6 +4,7 @@ import json
 import os
 import re
 import shutil
+import tempfile
 from dataclasses import dataclass
 from enum import Enum
 from pathlib import Path, PurePosixPath
@@ -28,6 +29,10 @@ class FileStatus(str, Enum):
     UNCHANGED = "unchanged"
     MODIFIED = "modified-generated"
     CONFLICT = "untracked-conflict"
+
+
+class InstallationCancelled(RuntimeError):
+    """Raised before writes when the user rejects any planned replacement."""
 
 
 @dataclass(frozen=True)
@@ -163,6 +168,15 @@ def build_plan(
     )
 
 
+def required_paths(profile: Profile, template_root: Path) -> tuple[str, ...]:
+    entries = _load_inventory(template_root / "core")
+    for module_id in profile.selected_modules:
+        entries.extend(_load_inventory(template_root / "modules" / module_id))
+    paths = [entry["destination"] for entry in entries]
+    paths.append(".applied-ai-rig/profile.json")
+    return tuple(sorted(paths))
+
+
 def unified_diff(item: PlannedFile, destination: Path) -> str:
     try:
         current = destination.read_text(encoding="utf-8").splitlines(keepends=True)
@@ -193,9 +207,9 @@ def install_plan(
             manifest_files.append(GeneratedFile(item.relative_path.as_posix(), item.checksum))
             continue
         if item.status in (FileStatus.MODIFIED, FileStatus.CONFLICT) and not approve(item):
-            if item.known_checksum:
-                manifest_files.append(GeneratedFile(item.relative_path.as_posix(), item.known_checksum))
-            continue
+            raise InstallationCancelled(
+                f"Installation cancelled; {item.relative_path.as_posix()} was not approved."
+            )
         selected.append(item)
         manifest_files.append(GeneratedFile(item.relative_path.as_posix(), item.checksum))
 
@@ -206,6 +220,7 @@ def install_plan(
         selected_modules=plan.profile.selected_modules,
         files=tuple(sorted(manifest_files, key=lambda entry: entry.path)),
         manual_integrations=plan.manual_integrations,
+        manual_integration_statuses={path: "proposed" for path in plan.manual_integrations},
     )
     manifest_relative = PurePosixPath(".applied-ai-rig/manifest.json")
     manifest_destination = _safe_destination(plan.target, manifest_relative)
@@ -216,13 +231,13 @@ def install_plan(
             and existing.selected_modules == manifest.selected_modules
             and existing.files == manifest.files
             and existing.manual_integrations == manifest.manual_integrations
+            and existing.manual_integration_statuses == manifest.manual_integration_statuses
         ):
             return existing
 
-    staging = plan.target / ".applied-ai-rig/.staging"
-    if staging.exists():
-        shutil.rmtree(staging)
-    _mkdir(staging, created_directories)
+    staging_parent = plan.target / ".applied-ai-rig"
+    _mkdir(staging_parent, created_directories)
+    staging = Path(tempfile.mkdtemp(prefix=".rig-staging-", dir=staging_parent))
 
     staged: list[tuple[Path, Path]] = []
     for item in selected:

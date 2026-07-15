@@ -5,6 +5,7 @@ from dataclasses import dataclass
 from enum import Enum
 from pathlib import Path
 
+from .installer import required_paths
 from .manifest import Manifest, Profile
 
 
@@ -86,6 +87,26 @@ def check_project(target: Path) -> CheckResult:
                 "Profile and manifest select different modules; re-run the initializer and review the plan.",
             )
         )
+    if manifest.rig_version != profile.rig_version:
+        findings.append(
+            _finding(
+                Severity.ERROR,
+                ".applied-ai-rig",
+                "Profile and manifest declare different Rig versions; re-run the initializer.",
+            )
+        )
+
+    manifest_entries = {entry.path: entry for entry in manifest.files}
+    template_root = Path(__file__).resolve().parents[1] / "templates"
+    for required in required_paths(profile, template_root):
+        if required not in manifest_entries:
+            findings.append(
+                _finding(
+                    Severity.ERROR,
+                    required,
+                    "Selected artifact is absent from the manifest; re-run the initializer.",
+                )
+            )
 
     generated_paths: list[Path] = []
     for entry in manifest.files:
@@ -149,7 +170,29 @@ def _check_links(target: Path, source: Path, content: str) -> list[Finding]:
             continue
         if not destination.exists():
             findings.append(_finding(Severity.ERROR, source.relative_to(target).as_posix(), f"Broken internal link: {raw}"))
+            continue
+        if "#" in raw and destination.is_file() and destination.suffix.lower() == ".md":
+            anchor = raw.split("#", 1)[1]
+            destination_content = destination.read_text(encoding="utf-8")
+            anchors = {
+                _heading_anchor(line)
+                for line in destination_content.splitlines()
+                if line.startswith("#")
+            }
+            if anchor not in anchors:
+                findings.append(
+                    _finding(
+                        Severity.ERROR,
+                        source.relative_to(target).as_posix(),
+                        f"Broken internal link anchor: {raw}",
+                    )
+                )
     return findings
+
+
+def _heading_anchor(line: str) -> str:
+    heading = line.lstrip("#").strip().lower()
+    return re.sub(r"[^a-z0-9 _-]", "", heading).replace(" ", "-")
 
 
 def _check_csv(path: Path, relative: str, content: str) -> list[Finding]:

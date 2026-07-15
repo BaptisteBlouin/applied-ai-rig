@@ -5,6 +5,7 @@ from pathlib import Path
 
 from applied_ai_rig.installer import (
     FileStatus,
+    InstallationCancelled,
     build_plan,
     classify_file,
     install_plan,
@@ -102,6 +103,19 @@ class ClassificationTests(unittest.TestCase):
 
 
 class AtomicInstallTests(unittest.TestCase):
+    def test_existing_staging_directory_is_never_deleted(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            target = Path(directory)
+            staging = target / ".applied-ai-rig/.staging"
+            staging.mkdir(parents=True)
+            marker = staging / "owned-by-project.txt"
+            marker.write_text("keep", encoding="utf-8")
+            plan = build_plan(target, core_profile(), ROOT / "templates")
+
+            install_plan(plan, approve=lambda _: True, installed_at="2026-07-15T10:00:00Z")
+
+            self.assertEqual(marker.read_text(encoding="utf-8"), "keep")
+
     def test_fresh_install_writes_files_and_checksum_manifest(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
             target = Path(directory)
@@ -194,7 +208,8 @@ class RerunTests(unittest.TestCase):
             decision_file.write_text("my decisions\n", encoding="utf-8")
             second = build_plan(target, core_profile(), ROOT / "templates", checksums)
 
-            install_plan(second, approve=lambda _: False, installed_at="2026-07-15T11:00:00Z")
+            with self.assertRaises(InstallationCancelled):
+                install_plan(second, approve=lambda _: False, installed_at="2026-07-15T11:00:00Z")
 
             self.assertEqual(decision_file.read_text(encoding="utf-8"), "my decisions\n")
 

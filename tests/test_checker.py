@@ -1,3 +1,4 @@
+import json
 import tempfile
 import unittest
 from pathlib import Path
@@ -41,6 +42,19 @@ class ManifestCheckTests(unittest.TestCase):
             result = check_project(target)
 
         self.assertTrue(any("Generated file is missing" in item.message for item in result.errors))
+
+    def test_manifest_cannot_hide_a_missing_selected_artifact(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            target = Path(directory)
+            install_fixture(target)
+            manifest_path = target / ".applied-ai-rig/manifest.json"
+            data = json.loads(manifest_path.read_text(encoding="utf-8"))
+            hidden = data["files"].pop(0)["path"]
+            manifest_path.write_text(json.dumps(data), encoding="utf-8")
+
+            result = check_project(target)
+
+        self.assertTrue(any(item.path == hidden for item in result.errors))
 
     def test_user_modified_generated_file_is_a_warning(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
