@@ -1,0 +1,18 @@
+# Model API, credentials, usage, and cost
+
+Use this module when the application calls external or metered model services.
+
+## Boundaries
+
+- Load credentials from an approved secret mechanism. Never record their values here.
+- Record which provider and model were used without storing account IDs or private endpoints.
+- Treat prompts, responses, and provider request IDs as sensitive unless explicitly classified otherwise.
+- Count product calls, embeddings, evaluation judges, synthetic generation, failures, and retries.
+
+## Cost evidence
+
+Prefer billed usage, then dated published prices applied to measured units. Otherwise record cost as
+`unknown`. A credential supplied at no charge to the developer does not prove that inference has zero cost.
+
+Detailed traces may remain in an external system. This CSV is the attributable usage index, not a duplicate
+observability platform.

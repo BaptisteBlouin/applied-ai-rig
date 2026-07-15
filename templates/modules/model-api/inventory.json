@@ -1,0 +1,4 @@
+[
+  {"module": "model-api", "source": "README.md.tmpl", "destination": "docs/applied-ai-rig/modules/model-api/README.md"},
+  {"module": "model-api", "source": "api_usage.csv.tmpl", "destination": "docs/applied-ai-rig/modules/model-api/api_usage.csv"}
+]

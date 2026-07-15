@@ -1,0 +1,13 @@
+# Production operations
+
+Use this module when the application serves users or runs as an operated service.
+
+Record the accountable owner, service health signal, operating limits, observability source, release and
+rollback procedure, incident path, data dependencies, and model-provider dependencies. A health check should
+answer an operational question rather than expose internals or trigger expensive model calls.
+
+Define what happens when inference is slow, unavailable, over budget, or returns invalid output. Link
+release claims and incidents to evidence and decisions.
+
+This module documents operating responsibilities. It does not deploy infrastructure, configure monitoring,
+or make the application production-ready by itself.

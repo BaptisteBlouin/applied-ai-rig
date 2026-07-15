@@ -1,0 +1,14 @@
+# Evaluation and significant experiments
+
+Use this module when variants are compared, model behavior can regress, or quality claims will be shared.
+
+Create one record for a baseline, a decision-relevant variant, a regression check, or a cited final run.
+Do not record every trace. Detailed prompts, responses, spans, and metrics may remain in an external system
+such as an experiment tracker or observability platform.
+
+Each result should link a stable `run_id` to the relevant decision, code revision, dataset version,
+model/configuration, metric definition, API usage, and evidence. Mark invalid and failed runs instead of
+silently removing them.
+
+Before publishing a result, verify that the protocol is comparable, the dataset may be referenced, the
+metric was defined before interpretation, and limitations are explicit.

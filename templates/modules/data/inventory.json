@@ -1,0 +1,4 @@
+[
+  {"module": "data", "source": "README.md.tmpl", "destination": "docs/applied-ai-rig/modules/data/README.md"},
+  {"module": "data", "source": "data_register.csv.tmpl", "destination": "docs/applied-ai-rig/modules/data/data_register.csv"}
+]

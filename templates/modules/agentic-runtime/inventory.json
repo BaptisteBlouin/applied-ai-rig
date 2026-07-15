@@ -1,0 +1,4 @@
+[
+  {"module": "agentic-runtime", "source": "README.md.tmpl", "destination": "docs/applied-ai-rig/modules/agentic-runtime/README.md"},
+  {"module": "agentic-runtime", "source": "action_register.csv.tmpl", "destination": "docs/applied-ai-rig/modules/agentic-runtime/action_register.csv"}
+]

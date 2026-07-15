@@ -1,0 +1,27 @@
+# Supplied and sensitive data
+
+Use this module for personal, confidential, supplied, third-party, or persisted model data.
+
+## Before processing
+
+Record provenance, purpose, owner, classification, retention, deletion requirements, and allowed destinations.
+Authorization to process data is not authorization to publish it or send it to every model,
+assistant, tracing service, or evaluation provider.
+
+## Minimize and contain
+
+- Inspect only what is necessary to establish the schema and risk.
+- Remove unnecessary fields before development or inference.
+- Prefer independently synthetic fixtures for public tests and demonstrations.
+- Treat chunks, prompts, responses, caches, embeddings, indexes, and evaluation sets as derived artifacts
+  that can inherit source sensitivity.
+- Keep originals immutable and separate from working and derived data when the project needs those stages.
+
+Pseudonymization reduces direct identification risk. It does not prove anonymization or regulatory
+compliance.
+
+## Incidents and closure
+
+Stop affected processing after an unintended disclosure, preserve facts, notify the accountable owner, and
+follow the project's incident procedure. At closure, verify deletion or authorized retention of originals,
+working copies, derived artifacts, logs, and external copies.

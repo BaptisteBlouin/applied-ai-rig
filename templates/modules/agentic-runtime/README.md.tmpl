@@ -1,0 +1,13 @@
+# Agentic runtime boundaries
+
+Use this module when model-driven behavior can call tools or produce a side effect.
+
+- Grant every tool the minimum permission and resource scope required.
+- Validate tool arguments in deterministic code and treat model output as untrusted.
+- Require human approval before destructive, irreversible, costly, or externally visible actions.
+- Define bounded consumption for calls, tokens, loops, time, and money.
+- Record the escalation path when permission, data classification, or expected impact is unclear.
+- Test misuse and denial paths, not only successful tool calls.
+
+These records describe intended boundaries. Applied AI Rig is not a runtime policy engine and cannot enforce
+authorization or human approval by itself.
