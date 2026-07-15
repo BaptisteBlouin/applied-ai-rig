@@ -2,9 +2,9 @@
 
 Verification date: 2026-07-15.
 
-Environment: Python 3.12 on Linux. The implementation targets Python 3.10 or later and uses only the standard
-library. Cross-platform path behavior is covered through `pathlib`, Windows-path validation, spaces, and
-non-ASCII target tests; native Windows and macOS CI remain release follow-up work.
+The local verification used Python 3.12 on Linux. The implementation targets Python 3.10 or later and uses
+only the standard library. GitHub Actions also runs the suite on Linux, macOS, and Windows with the oldest
+and newest supported Python versions.
 
 ## Automated commands
 
@@ -60,11 +60,8 @@ and zero warnings. The re-run classified every generated file as unchanged.
 - Existing generated modifications produce warnings in structural checks, not false claims of validity.
 - Structural output avoids claims of compliance, certification, or production readiness.
 
-## Deferred release work
+## Publication follow-up
 
-- Run the suite on native Windows and macOS through externally configured CI.
-- Replace the README clone placeholder after the public repository URL exists.
-- Enable GitHub private vulnerability reporting after repository publication.
 - Create release tags and changelog policy after the first public release decision.
 
-These items do not change V1 behavior and require external repository state or user authorization.
+This does not change V1 behavior and should follow the first public release decision.

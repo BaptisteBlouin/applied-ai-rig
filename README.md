@@ -31,8 +31,9 @@ Optional modules are recommended from observable project risks:
 Applied AI Rig requires Python 3.10 or later and uses only the standard library.
 
 ```bash
-git clone <repository-url> applied-ai-rig
-python applied-ai-rig/init.py /path/to/your-project
+git clone https://github.com/BaptisteBlouin/applied-ai-rig.git
+cd applied-ai-rig
+python init.py /path/to/your-project
 ```
 
 Review the proposed modules and files before confirming. For a preview that writes nothing:
