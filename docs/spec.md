@@ -90,6 +90,22 @@ python init.py /path/to/project --modules model-api,data,evaluation --non-intera
 `--non-interactive` requires explicit module selection or a readable existing project profile. It exits
 non-zero rather than guessing when required information is missing.
 
+### Guided discovery
+
+```bash
+python init.py --list-modules
+python init.py --explain agentic-runtime
+python init.py /path/to/project --profile api-rag
+```
+
+Interactive setup provides `minimal`, `api-rag`, `agent`, and `production` starting profiles plus a custom
+assessment. Custom questions support contextual help, backward navigation, and cancellation. A final module
+screen shows all modules, recommendation reasons, generated artifacts through detail views, and explicit
+toggles before the file plan is built. Existing profiles are summarized and may be kept or reassessed.
+
+`--modules` remains the exact low-level selection interface for scripts. `--profile` is mutually exclusive
+with `--modules` and can be combined with `--non-interactive`.
+
 ### Structural validation
 
 ```bash
@@ -310,6 +326,9 @@ Conventions:
 - Output separates facts, recommendations, warnings, and write actions.
 - Interactive cancellation writes nothing.
 - Error messages identify the path or field and a concrete recovery action.
+- Quick profiles remain editable and are never presented as inferred facts.
+- `?` explains a question, `b` navigates backward, and `q` cancels before writes.
+- Module selection presents both triggered and untriggered modules and preserves explicit declines.
 
 ## Testing strategy
 

@@ -54,6 +54,37 @@ python init.py /path/to/your-project \
 
 Use `--modules none` for a core-only installation.
 
+## Guided setup
+
+Interactive setup offers four quick profiles plus a custom risk assessment:
+
+1. Minimal core.
+2. API or RAG application.
+3. Agent with tools.
+4. Production AI service.
+5. Custom assessment.
+
+In the custom assessment, use `?` to explain why a question matters, `b` to return to the previous question,
+and `q` to cancel without writing. Before planning files, the module selection screen shows every
+recommendation and lets you toggle modules by number or open details with `?N`.
+
+Inspect the choices without starting the wizard:
+
+```bash
+python init.py --list-modules
+python init.py --explain evaluation
+```
+
+Use a quick profile directly, interactively or in automation:
+
+```bash
+python init.py /path/to/your-project --profile api-rag
+python init.py /path/to/your-project --profile production --non-interactive
+```
+
+Named profiles are starting points, not claims about the project. Review the resulting modules and decline
+anything that does not apply.
+
 ## Structural check
 
 ```bash

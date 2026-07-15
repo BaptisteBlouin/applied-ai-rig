@@ -5,7 +5,7 @@ import unittest
 from pathlib import Path
 from unittest.mock import Mock
 
-from applied_ai_rig.cli import InteractiveApprover
+from applied_ai_rig.cli import InteractiveApprover, run_setup_wizard
 from applied_ai_rig.installer import FileStatus, PlannedFile
 
 
@@ -29,6 +29,40 @@ class CliSmokeTests(unittest.TestCase):
         self.assertIn("Applied AI Rig", result.stdout)
         self.assertIn("--dry-run", result.stdout)
         self.assertIn("--check", result.stdout)
+        self.assertIn("--list-modules", result.stdout)
+        self.assertIn("--explain", result.stdout)
+        self.assertIn("--profile", result.stdout)
+
+    def test_list_modules_explains_triggers_and_generated_artifacts(self) -> None:
+        result = self.run_cli("--list-modules")
+
+        self.assertEqual(result.returncode, 0)
+        for module_id in ("model-api", "data", "evaluation", "agentic-runtime", "operations"):
+            self.assertIn(module_id, result.stdout)
+        self.assertIn("Generated", result.stdout)
+
+    def test_explain_prints_detailed_module_guidance(self) -> None:
+        result = self.run_cli("--explain", "evaluation")
+
+        self.assertEqual(result.returncode, 0)
+        self.assertIn("Evaluation", result.stdout)
+        self.assertIn("Recommended when", result.stdout)
+        self.assertIn("EVALUATION_PLAN.md", result.stdout)
+
+    def test_named_profile_can_drive_a_non_interactive_preview(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            result = self.run_cli(
+                directory,
+                "--profile",
+                "api-rag",
+                "--non-interactive",
+                "--dry-run",
+            )
+
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertIn("modules/model-api/README.md", result.stdout)
+        self.assertIn("modules/data/README.md", result.stdout)
+        self.assertIn("modules/evaluation/README.md", result.stdout)
 
     def test_unknown_argument_returns_usage_error(self) -> None:
         result = self.run_cli("--does-not-exist")
@@ -124,6 +158,40 @@ class InteractiveApprovalTests(unittest.TestCase):
         self.assertFalse(approver(item))
         self.assertEqual(input_fn.call_count, 1)
 
+
+class SetupWizardTests(unittest.TestCase):
+    def test_question_help_and_back_are_supported_without_losing_answers(self) -> None:
+        replies = iter(["5", "?", "y", "b", "n", "n", "n", "n", "n", "n", ""])
+        output: list[str] = []
+
+        profile = run_setup_wizard(
+            input_fn=lambda _: next(replies),
+            output_fn=output.append,
+        )
+
+        self.assertFalse(profile.answers["external_model_api"])
+        self.assertTrue(any("Why this matters" in line for line in output))
+
+    def test_recommended_modules_can_be_toggled_before_confirmation(self) -> None:
+        replies = iter(["2", "4", ""])
+
+        profile = run_setup_wizard(input_fn=lambda _: next(replies), output_fn=lambda _: None)
+
+        self.assertEqual(
+            profile.selected_modules,
+            ("model-api", "data", "evaluation", "agentic-runtime"),
+        )
+
+    def test_quick_profile_does_not_invent_risk_answers(self) -> None:
+        replies = iter(["4", ""])
+
+        profile = run_setup_wizard(input_fn=lambda _: next(replies), output_fn=lambda _: None)
+
+        self.assertEqual(dict(profile.answers), {})
+        self.assertEqual(
+            profile.selected_modules,
+            ("model-api", "data", "evaluation", "operations"),
+        )
 
 if __name__ == "__main__":
     unittest.main()

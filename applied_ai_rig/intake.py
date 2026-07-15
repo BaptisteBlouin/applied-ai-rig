@@ -13,6 +13,62 @@ class Question:
     reason: str
 
 
+@dataclass(frozen=True)
+class ModuleInfo:
+    id: str
+    title: str
+    recommended_when: str
+    covers: str
+    generated: tuple[str, ...]
+
+
+MODULE_INFO = {
+    "model-api": ModuleInfo(
+        "model-api",
+        "Model API",
+        "The project uses credentials, external inference, embeddings, reranking, or metered models.",
+        "Model inventory, credential boundaries, provider terms, limits, retries, validation, usage, and cost.",
+        ("README.md", "model_register.csv", "api_usage.csv"),
+    ),
+    "data": ModuleInfo(
+        "data",
+        "Data",
+        "The project handles supplied, persisted, personal, confidential, or third-party data.",
+        "Provenance, access, destinations, derivatives, quality, backups, retention, and deletion evidence.",
+        ("README.md", "data_register.csv"),
+    ),
+    "evaluation": ModuleInfo(
+        "evaluation",
+        "Evaluation",
+        "Variants are compared, behavior can regress, or quality, safety, latency, or cost claims are made.",
+        "Evaluation protocol, held-out data, thresholds, uncertainty, judges, experiments, and error analysis.",
+        ("README.md", "EVALUATION_PLAN.md", "experiments.csv"),
+    ),
+    "agentic-runtime": ModuleInfo(
+        "agentic-runtime",
+        "Agentic runtime",
+        "Model-driven behavior can call tools, communicate externally, spend money, or mutate resources.",
+        "Permissions, approvals, injection, exfiltration, idempotency, compensation, audit, and misuse cases.",
+        ("README.md", "action_register.csv", "misuse_cases.csv"),
+    ),
+    "operations": ModuleInfo(
+        "operations",
+        "Operations",
+        "The application serves users or runs as a scheduled, long-lived, or production service.",
+        "Ownership, service levels, alerts, runbooks, budgets, recovery, incidents, and regressions.",
+        ("README.md", "service_register.csv", "incident_register.csv"),
+    ),
+}
+
+
+SETUP_PROFILES = {
+    "minimal": (),
+    "api-rag": ("model-api", "data", "evaluation"),
+    "agent": ("model-api", "data", "evaluation", "agentic-runtime"),
+    "production": ("model-api", "data", "evaluation", "operations"),
+}
+
+
 QUESTIONS = (
     Question(
         "external_model_api",

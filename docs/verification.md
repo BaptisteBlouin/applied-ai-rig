@@ -13,7 +13,7 @@ python3 -m unittest discover -s tests -v
 python3 -m compileall -q init.py applied_ai_rig tests
 ```
 
-Result: 53 tests passed. The standard-library compilation check also completed successfully.
+Result: 59 tests passed. The standard-library compilation check also completed successfully.
 
 ## Clean-room walkthrough
 
@@ -61,6 +61,8 @@ and zero warnings. The re-run classified every generated file as unchanged.
 - Structural output avoids claims of compliance, certification, or production readiness.
 - Core workflow tests require before/during/delivery guidance, worklog continuity, and residual-risk handoff.
 - Module tests require the risk-specific lifecycle controls and registers documented by each selected module.
+- CLI tests cover module discovery, detailed explanations, named profiles, contextual question help,
+  backward navigation, and explicit module toggling.
 
 ## Publication follow-up
 

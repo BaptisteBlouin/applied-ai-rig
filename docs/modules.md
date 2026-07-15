@@ -4,6 +4,10 @@ The initializer recommends modules from observable project risks. A recommendati
 may help; the user decides whether to install it. Declined recommendations remain visible in the project
 profile so a later run can explain changes.
 
+Use `python init.py --list-modules` for a summary or `python init.py --explain <module>` for its trigger,
+coverage, and generated artifacts. Interactive setup offers editable quick profiles and a custom assessment;
+`--modules` remains available for exact scripted selection.
+
 ## Core
 
 The core is always installed. It contains operating principles, decisions, evidence, reading order,
