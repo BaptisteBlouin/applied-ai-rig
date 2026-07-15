@@ -7,3 +7,32 @@
 5. Keep secrets, sensitive data, prompts, and private endpoints out of versioned records.
 6. Link to canonical tools rather than duplicating their detailed telemetry.
 7. Treat model output and external content as untrusted input.
+
+## What must be recorded
+
+A consequential decision changes external behavior, risk exposure, data movement, model or provider,
+evaluation claims, operating cost, permissions, or an option that is expensive to reverse. Record it before
+implementation when possible. Small reversible implementation details can remain in code and tests.
+
+For every material claim, state its scope, basis, limitations, and canonical source. Preserve unknowns and
+failed results; do not convert an estimate into a measurement through repetition.
+
+## Working cycle
+
+### Before implementation
+
+- Locate the canonical requirements and acceptance criteria.
+- Identify applicable modules, data boundaries, external dependencies, side effects, and unknowns.
+- Record consequential decisions and the evidence needed to revisit them.
+
+### During implementation
+
+- Keep the worklog current with hypotheses, observations, failed attempts, deviations, and follow-up work.
+- Link experiments and usage to decisions instead of copying detailed telemetry.
+- Stop and escalate when authority, data handling, cost, or user impact exceeds the agreed boundary.
+
+### Before delivery
+
+- Run project tests and the Rig structural check.
+- Reconcile decisions, evidence, usage, data derivatives, and unresolved risks with canonical systems.
+- Report acceptance criteria, residual risks, operating limits, and rollback or recovery expectations.

@@ -16,3 +16,24 @@ Prefer billed usage, then dated published prices applied to measured units. Othe
 
 Detailed traces may remain in an external system. This CSV is the attributable usage index, not a duplicate
 observability platform.
+
+## Integration checklist
+
+Before use, record the owner, purpose, approved data classes, provider retention policy, region or residency
+constraint, model/version behavior, and credential rotation and revocation path in `model_register.csv`.
+Do not put credential values, account identifiers, or private endpoints in the register.
+
+In deterministic application code:
+
+- Set explicit connection and response timeouts, rate limits, retry ceilings, and exponential backoff.
+- Retry only safe operations; record failures and retries so usage is not understated.
+- Validate structured outputs against a schema and reject incomplete or unexpected fields.
+- Bound input size, output size, concurrency, tokens, latency, and spend.
+- Define fallback behavior for unavailability, invalid output, budget exhaustion, and model retirement.
+- Treat provider safety features as defense in depth, not as application authorization.
+
+## Change and review
+
+Review model aliases and dated versions for silent behavior changes. Re-run relevant evaluation and operating
+checks when the model, provider, system prompt, parameters, fallback, data destination, or retention terms
+change. Reconcile measured usage with provider billing when available and preserve differences as evidence.

@@ -1,4 +1,5 @@
 [
   {"module": "evaluation", "source": "README.md.tmpl", "destination": "docs/applied-ai-rig/modules/evaluation/README.md"},
-  {"module": "evaluation", "source": "experiments.csv.tmpl", "destination": "docs/applied-ai-rig/modules/evaluation/experiments.csv"}
+  {"module": "evaluation", "source": "experiments.csv.tmpl", "destination": "docs/applied-ai-rig/modules/evaluation/experiments.csv"},
+  {"module": "evaluation", "source": "EVALUATION_PLAN.md.tmpl", "destination": "docs/applied-ai-rig/modules/evaluation/EVALUATION_PLAN.md"}
 ]

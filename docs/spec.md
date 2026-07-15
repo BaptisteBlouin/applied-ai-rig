@@ -171,6 +171,8 @@ target-project/
 │       ├── OPERATING_PRINCIPLES.md # Concise core for humans and agents
 │       ├── DECISIONS.md            # Stable decision IDs and supersession
 │       ├── EVIDENCE.md             # Claim-to-evidence index
+│       ├── WORKLOG.md              # Chronological facts, attempts, and handoff state
+│       ├── DELIVERY_CHECKLIST.md    # Evidence-backed delivery review
 │       └── modules/                # Only selected module artifacts
 └── APPLIED_AI_RIG_AGENT.md         # Companion agent instructions
 ```
@@ -190,8 +192,11 @@ The core is always installed and contains:
 2. Decision records with stable IDs, status, consequences, revision thresholds, and supersession links.
 3. Claim-to-evidence rules that distinguish measured, estimated, and unknown values.
 4. A reading order and links to selected modules.
-5. A profile and installation manifest.
-6. Update, conflict, and manual removal guidance.
+5. A chronological worklog for material observations, failed attempts, deviations, and handoff state.
+6. A delivery checklist covering acceptance criteria, evidence, residual risk, cost, tests, and recovery.
+7. Agent guidance for work before, during, and after implementation.
+8. A profile and installation manifest.
+9. Update, conflict, and manual removal guidance.
 
 The core does not require users to adopt a specification workflow, ticket process, branching model, or
 agent role hierarchy.
@@ -203,11 +208,11 @@ reason. Users may accept or decline recommendations.
 
 | Module | Observable trigger examples | Generated concerns |
 |---|---|---|
-| `model-api` | External model APIs, paid inference, or credentials are used | Credential boundaries, provider/model inventory, API usage, tokens, cost, error and retry accounting |
-| `data` | Third-party, personal, confidential, supplied, or persisted data is processed | Provenance, classification, minimization, allowed destinations, derived artifacts, retention, deletion, incidents |
-| `evaluation` | Quality claims are made, variants are compared, or AI behavior can regress | Stable run IDs, datasets and versions, model/config links, metrics, evidence, external experiment-system references |
-| `agentic-runtime` | The application can call tools or take actions with side effects | Permission boundaries, human approval points, bounded consumption, tool argument validation, escalation |
-| `operations` | The application will run in production or serve users | Ownership, health, observability references, releases, rollback, incident handling, operating limits |
+| `model-api` | External model APIs, paid inference, or credentials are used | Credential boundaries, model inventory, provider retention, version policy, API usage, tokens, cost, timeout/retry limits, output validation, fallback, and change review |
+| `data` | Third-party, personal, confidential, supplied, or persisted data is processed | Provenance, classification, access, licensing, minimization, allowed destinations, logs/backups, quality, derived artifacts, retention, deletion verification, and incidents |
+| `evaluation` | Quality claims are made, variants are compared, or AI behavior can regress | Predefined protocols and thresholds, held-out data, uncertainty, human/model judge limits, adversarial cases, stable runs, error analysis, and external references |
+| `agentic-runtime` | The application can call tools or take actions with side effects | Authentication/authorization, injection and exfiltration boundaries, approvals, validation, idempotency, compensation, sandboxing, audit, kill switches, and misuse cases |
+| `operations` | The application will run in production or serve users | Ownership, service levels, health and alerts, budgets, degraded modes, releases, rollback, backup/restore, incident review, and behavioral regression |
 
 RAG, voice, document processing, and providers are examples composed from these modules rather than
 first-class modules in V1.

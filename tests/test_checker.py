@@ -104,6 +104,28 @@ class ContentCheckTests(unittest.TestCase):
 
         self.assertTrue(any("CSV header" in item.message for item in result.errors))
 
+    def test_new_module_register_schema_is_checked(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            target = Path(directory)
+            install_fixture(target, "model-api")
+            path = target / "docs/applied-ai-rig/modules/model-api/model_register.csv"
+            path.write_text("owner,model\n", encoding="utf-8")
+
+            result = check_project(target)
+
+        self.assertTrue(any(item.path.endswith("model_register.csv") for item in result.errors))
+
+    def test_new_core_record_heading_is_checked(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            target = Path(directory)
+            install_fixture(target)
+            path = target / "docs/applied-ai-rig/WORKLOG.md"
+            path.write_text("Material notes without the required heading.\n", encoding="utf-8")
+
+            result = check_project(target)
+
+        self.assertTrue(any(item.path.endswith("WORKLOG.md") for item in result.errors))
+
     def test_findings_never_claim_compliance_or_readiness(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
             result = check_project(Path(directory))

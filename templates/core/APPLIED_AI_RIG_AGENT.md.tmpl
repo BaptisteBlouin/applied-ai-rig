@@ -10,3 +10,24 @@ behavior.
 - Never record secrets, sensitive content, prompts, responses, or private endpoints in project records.
 
 Selected optional modules: {{SELECTED_MODULES}}.
+
+## Before implementation
+
+1. Read the canonical requirements and `docs/applied-ai-rig/OPERATING_PRINCIPLES.md`.
+2. Identify applicable module records before accessing data, calling a model, or enabling a side effect.
+3. Record a proposed consequential decision before implementing a hard-to-reverse choice.
+4. State assumptions and unknowns; never silently fill an authority, security, or product gap.
+
+## During implementation
+
+1. Append material observations, failed attempts, deviations, and next steps to `WORKLOG.md`.
+2. Update module registers when an API, dataset, experiment, tool action, or service boundary changes.
+3. Keep detailed telemetry in its canonical source and record only safe identifiers and summaries here.
+4. Pause before an unapproved external write, sensitive-data transfer, material expense, or destructive action.
+
+## Before delivery
+
+1. Run the application checks and `python init.py --check <project>` from the Rig source checkout.
+2. Complete `DELIVERY_CHECKLIST.md` using evidence, not inference.
+3. Report unmet acceptance criteria, unknowns, residual risks, costs, and rollback expectations explicitly.
+4. Leave records understandable without access to this conversation or private agent state.

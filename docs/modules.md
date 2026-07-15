@@ -18,8 +18,9 @@ Trigger examples:
 - Metered inference or credentials supplied by another organization.
 - Model-based evaluation or synthetic generation.
 
-The module records credential boundaries and attributable usage. Unknown tokens or prices remain unknown.
-Detailed traces can stay in an external system.
+The module records credential boundaries, model/version policy, approved data classes, provider retention,
+limits, retries, structured-output validation, fallback, attributable usage, and cost. Unknown tokens or
+prices remain unknown. Detailed traces can stay in an external system.
 
 ## Data
 
@@ -28,8 +29,9 @@ Trigger examples:
 - Supplied, personal, confidential, or third-party data.
 - Persisted prompts, outputs, embeddings, indexes, or evaluation artifacts.
 
-The module covers provenance, classification, minimization, allowed destinations, derived artifacts,
-retention, deletion, and incidents. It produces engineering records, not legal conclusions.
+The module covers provenance, classification, licensing, access, minimization, allowed destinations,
+logs and backups, quality limits, hostile content, derived artifacts, retention, deletion verification, and
+incidents. It produces engineering records, not legal conclusions.
 
 ## Evaluation
 
@@ -39,8 +41,9 @@ Trigger examples:
 - Publishing a quality, latency, cost, or safety claim.
 - Managing behavior that can regress after model or data changes.
 
-The module creates a stable experiment index connecting decisions, code, datasets, model configuration,
-metrics, usage, and evidence. It can link to an experiment tracker instead of copying runtime traces.
+The module adds an evaluation plan and stable experiment index connecting decisions, code, held-out data,
+model configuration, predefined thresholds, uncertainty, human or model judges, error analysis, usage, and
+evidence. It can link to an experiment tracker instead of copying runtime traces.
 
 ## Agentic runtime
 
@@ -49,8 +52,9 @@ Trigger examples:
 - Tool calls, external communication, purchases, writes, or destructive actions.
 - Loops with material cost or resource consumption.
 
-The module records permission boundaries, argument validation, human approval points, limits, and escalation.
-It does not enforce these controls at runtime.
+The module records authentication and permission boundaries, injection and exfiltration cases, argument and
+result validation, human approval, idempotency, compensation, isolation, audit, limits, kill switches, and
+escalation. It does not enforce these controls at runtime.
 
 ## Operations
 
@@ -59,8 +63,9 @@ Trigger examples:
 - Serving users or running scheduled and long-lived processes.
 - Owning releases, incidents, rollback, health, and operating limits.
 
-The module records responsibilities and links to operational systems. It does not generate deployment or
-monitoring infrastructure.
+The module records responsibilities, service expectations, health and alerts, runbooks, dependency and
+budget limits, degraded modes, releases, rollback, backup/restore evidence, incidents, and behavioral
+regressions. It does not generate deployment or monitoring infrastructure.
 
 ## Adding a module
 

@@ -3,5 +3,7 @@
   {"source": "OPERATING_PRINCIPLES.md.tmpl", "destination": "docs/applied-ai-rig/OPERATING_PRINCIPLES.md"},
   {"source": "DECISIONS.md.tmpl", "destination": "docs/applied-ai-rig/DECISIONS.md"},
   {"source": "EVIDENCE.md.tmpl", "destination": "docs/applied-ai-rig/EVIDENCE.md"},
+  {"source": "WORKLOG.md.tmpl", "destination": "docs/applied-ai-rig/WORKLOG.md"},
+  {"source": "DELIVERY_CHECKLIST.md.tmpl", "destination": "docs/applied-ai-rig/DELIVERY_CHECKLIST.md"},
   {"source": "APPLIED_AI_RIG_AGENT.md.tmpl", "destination": "APPLIED_AI_RIG_AGENT.md"}
 ]

@@ -13,7 +13,7 @@ python3 -m unittest discover -s tests -v
 python3 -m compileall -q init.py applied_ai_rig tests
 ```
 
-Result: 50 tests passed. The standard-library compilation check also completed successfully.
+Result: 53 tests passed. The standard-library compilation check also completed successfully.
 
 ## Clean-room walkthrough
 
@@ -44,7 +44,7 @@ and zero warnings. The re-run classified every generated file as unchanged.
 | 6. Versioned checksum manifest | `AtomicInstallTests.test_fresh_install_writes_files_and_checksum_manifest` and manifest unit tests |
 | 7. Explained risk recommendations | `IntakeTests.test_each_risk_answer_recommends_expected_module_with_reason` |
 | 8. Core-only means core-only | `ModuleCompositionTests.test_core_only_has_no_optional_module_paths_or_links` |
-| 9. Structural defect detection | Checker tests for missing files, bad links, CSV headers, placeholders, schemas, and modified files |
+| 9. Structural defect detection | Checker tests for missing files, bad links, all generated CSV headers, required record headings, placeholders, schemas, and modified files |
 | 10. Canonical project files remain untouched | `ClassificationTests.test_existing_agent_file_becomes_manual_integration` and conflict policy |
 | 11. Stable evidence chain | Core decision/evidence tests and `EvaluationModuleTests` |
 | 12. Dependency-free offline suite | Standard-library imports, full `unittest` suite, and compile check |
@@ -59,6 +59,8 @@ and zero warnings. The re-run classified every generated file as unchanged.
 - Escaping template destinations are rejected before writes.
 - Existing generated modifications produce warnings in structural checks, not false claims of validity.
 - Structural output avoids claims of compliance, certification, or production readiness.
+- Core workflow tests require before/during/delivery guidance, worklog continuity, and residual-risk handoff.
+- Module tests require the risk-specific lifecycle controls and registers documented by each selected module.
 
 ## Publication follow-up
 

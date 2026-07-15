@@ -12,17 +12,23 @@ from .manifest import Manifest, Profile
 LINK = re.compile(r"\[[^]]+\]\(([^)]+)\)")
 PLACEHOLDER = re.compile(r"{{[A-Z][A-Z0-9_]*}}")
 EXPECTED_CSV_HEADERS = {
-    "api_usage.csv": "timestamp_utc,run_id,decision_id,owner,provider,model,purpose,request_count,input_tokens,cached_input_tokens,output_tokens,total_tokens,latency_ms,status,retry_of,measurement,cost_amount,cost_currency,cost_basis,pricing_snapshot,evidence_id,notes",
-    "data_register.csv": "data_id,owner,provenance,purpose,classification,personal_data,allowed_destinations,derived_artifacts,retention_until,deletion_status,decision_id,evidence_id,notes",
-    "experiments.csv": "timestamp_utc,run_id,decision_id,code_revision,dataset_id,dataset_version,dataset_fingerprint,model,config_ref,hypothesis,variant,primary_metric,primary_value,baseline_run_id,result,decision,api_usage_ref,evidence_id,external_system_ref,notes",
-    "action_register.csv": "action_id,tool,side_effect,resource_scope,permission,argument_validation,human_approval,bounded_consumption,escalation,decision_id,evidence_id,notes",
-    "incident_register.csv": "incident_id,opened_at,status,owner,impact,operating_limit,model_or_data_dependency,mitigation,rollback,decision_id,evidence_id,closed_at,notes",
+    "api_usage.csv": tuple("timestamp_utc,run_id,decision_id,owner,provider,model,purpose,request_count,input_tokens,cached_input_tokens,output_tokens,total_tokens,latency_ms,status,retry_of,measurement,cost_amount,cost_currency,cost_basis,pricing_snapshot,evidence_id,notes".split(",")),
+    "model_register.csv": tuple("model_id,owner,provider,model,version_policy,purpose,approved_data_classes,retention_policy,region_or_residency,credential_source,rotation_owner,rate_limit,timeout,retry_policy,fallback,budget_limit,output_validation,decision_id,evidence_id,external_reference,notes".split(",")),
+    "data_register.csv": tuple("data_id,owner,provenance,purpose,classification,personal_data,license_or_terms,access_control,allowed_destinations,derived_artifacts,log_exposure,backup_locations,quality_limits,retention_until,deletion_status,deletion_verification,decision_id,evidence_id,notes".split(",")),
+    "experiments.csv": tuple("timestamp_utc,run_id,decision_id,code_revision,dataset_id,dataset_version,dataset_fingerprint,model,config_ref,hypothesis,variant,primary_metric,primary_value,baseline_run_id,result,decision,api_usage_ref,evidence_id,external_system_ref,notes".split(",")),
+    "action_register.csv": tuple("action_id,tool,side_effect,resource_scope,authentication_context,authorization,permission,argument_validation,result_validation,human_approval,idempotency,compensation,bounded_consumption,audit_reference,kill_switch,escalation,decision_id,evidence_id,notes".split(",")),
+    "misuse_cases.csv": tuple("case_id,asset_or_goal,threat_source,scenario,precondition,expected_prevention,detection,response,residual_risk,test_reference,decision_id,evidence_id,notes".split(",")),
+    "incident_register.csv": tuple("incident_id,opened_at,status,owner,impact,operating_limit,model_or_data_dependency,mitigation,rollback,timeline_reference,post_incident_review,corrective_actions,decision_id,evidence_id,closed_at,notes".split(",")),
+    "service_register.csv": tuple("service_id,owner,users_or_consumers,service_level,health_signals,alerts,runbook,operating_limits,model_dependencies,data_dependencies,provider_dependencies,budget_limit,degraded_mode,circuit_breaker,release_reference,rollback_reference,backup_reference,restore_test,incident_path,decision_id,evidence_id,notes".split(",")),
 }
 REQUIRED_HEADINGS = {
     "docs/applied-ai-rig/README.md": "# Applied AI Rig records",
     "docs/applied-ai-rig/OPERATING_PRINCIPLES.md": "# Operating principles",
     "docs/applied-ai-rig/DECISIONS.md": "# Decisions",
     "docs/applied-ai-rig/EVIDENCE.md": "# Evidence",
+    "docs/applied-ai-rig/WORKLOG.md": "# Worklog",
+    "docs/applied-ai-rig/DELIVERY_CHECKLIST.md": "# Delivery checklist",
+    "docs/applied-ai-rig/modules/evaluation/EVALUATION_PLAN.md": "# Evaluation plan",
     "APPLIED_AI_RIG_AGENT.md": "# Applied AI Rig instructions",
 }
 
@@ -200,7 +206,7 @@ def _check_csv(path: Path, relative: str, content: str) -> list[Finding]:
     if expected is None:
         return []
     rows = list(csv.reader(content.splitlines()))
-    actual = ",".join(rows[0]) if rows else ""
+    actual = tuple(rows[0]) if rows else ()
     if actual != expected:
         return [_finding(Severity.ERROR, relative, f"CSV header does not match the {path.name} schema.")]
     return []

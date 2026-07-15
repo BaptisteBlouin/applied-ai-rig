@@ -9,5 +9,25 @@ Use this module when model-driven behavior can call tools or produce a side effe
 - Record the escalation path when permission, data classification, or expected impact is unclear.
 - Test misuse and denial paths, not only successful tool calls.
 
+## Threat boundaries
+
+- Treat user input, retrieved content, tool results, files, web pages, and memory as possible prompt injection.
+- Keep instructions separate from data and never let untrusted content grant permissions or change policy.
+- Enforce authentication and authorization in deterministic code using the current user and resource scope.
+- Prevent data exfiltration through tool arguments, URLs, logs, error messages, and model-visible context.
+- Allowlist network destinations and file/resource roots where practical; use a sandbox for untrusted code.
+
+## Safe execution
+
+- Give mutating actions an idempotency key and define duplicate, concurrent, partial-failure, and timeout behavior.
+- Define compensation or rollback for a partially completed workflow; do not assume a retry reverses an action.
+- Validate tool results before using them in another action and encode outputs for their destination.
+- Keep an audit reference for proposed, approved, denied, executed, failed, and compensated actions.
+- Provide a kill switch or bounded stop condition independent of model cooperation.
+
+Record representative abuse and failure paths in `misuse_cases.csv`, including the expected prevention,
+detection, response, and evidence. Revisit them whenever a tool, permission, memory source, autonomous loop,
+or external destination changes.
+
 These records describe intended boundaries. Applied AI Rig is not a runtime policy engine and cannot enforce
 authorization or human approval by itself.

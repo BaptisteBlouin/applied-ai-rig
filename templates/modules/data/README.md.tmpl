@@ -16,6 +16,12 @@ assistant, tracing service, or evaluation provider.
 - Treat chunks, prompts, responses, caches, embeddings, indexes, and evaluation sets as derived artifacts
   that can inherit source sensitivity.
 - Keep originals immutable and separate from working and derived data when the project needs those stages.
+- Define access control by role or service and remove access when the purpose ends.
+- Keep sensitive values out of source control, logs, analytics, crash reports, screenshots, and public demos.
+- Record source license or contractual terms and data quality limits; availability does not imply reuse rights.
+- Include backups, exports, caches, queues, and provider copies in retention and deletion planning.
+- Treat retrieved documents and metadata as untrusted input that may contain prompt injection or hostile links.
+- Protect evaluation splits from development leakage and record transformations that affect comparability.
 
 Pseudonymization reduces direct identification risk. It does not prove anonymization or regulatory
 compliance.
@@ -25,3 +31,8 @@ compliance.
 Stop affected processing after an unintended disclosure, preserve facts, notify the accountable owner, and
 follow the project's incident procedure. At closure, verify deletion or authorized retention of originals,
 working copies, derived artifacts, logs, and external copies.
+
+Deletion verification must identify what was checked, when, by whom, and which copies could not be verified.
+Reconcile the register after a new source, destination, derivative, access path, backup, retention change, or
+incident. Where the project has a canonical data catalog or privacy system, link it rather than duplicating
+sensitive details.

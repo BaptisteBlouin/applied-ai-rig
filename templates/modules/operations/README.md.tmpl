@@ -11,3 +11,23 @@ release claims and incidents to evidence and decisions.
 
 This module documents operating responsibilities. It does not deploy infrastructure, configure monitoring,
 or make the application production-ready by itself.
+
+## Readiness and limits
+
+Record each operated workload in `service_register.csv`, including its owner, users, service level or
+explicit expectation, health signals, alerts, runbook, dependencies, budget limit, and recovery references.
+Define latency, error, quality, safety, and cost limits where they affect users or the ability to operate.
+
+- Use timeouts, load shedding, queues, rate limits, circuit breakers, and bounded fallbacks where appropriate.
+- Alert on user impact and actionable limits, including budget exhaustion and provider quota pressure.
+- Ensure observability excludes sensitive payloads by default and links to access-controlled canonical tools.
+- Test backup and restore, not only backup creation; document recovery point and recovery time expectations.
+- Exercise rollback and degraded operation before relying on them during an incident.
+
+## Change and incident management
+
+Treat model, prompt, retrieval data, tool, provider, and policy changes as possible behavioral regressions.
+Tie releases to evaluation evidence and define what triggers rollback. During incidents, preserve a safe
+timeline and decisions; after recovery, complete a post-incident review with contributing conditions,
+corrective actions, owners, and verification. Review provider outage, quota, latency, invalid-output, data
+corruption, and runaway-cost scenarios.

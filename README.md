@@ -13,18 +13,20 @@ Every installation includes a small core:
 - Operating principles for humans and agents.
 - Decision records with status, consequences, revision thresholds, and supersession.
 - A claim-to-evidence index that distinguishes measured, estimated, and unknown values.
+- A chronological worklog for observations, failed attempts, deviations, and handoff context.
+- A delivery checklist for acceptance criteria, residual risks, costs, tests, and recovery expectations.
 - A project profile and checksum manifest for safe re-runs.
-- Companion agent instructions that can be linked from an existing `AGENTS.md` or equivalent file.
+- Companion agent instructions covering work before, during, and after implementation.
 
 Optional modules are recommended from observable project risks:
 
 | Module | Use it when |
 |---|---|
-| `model-api` | The project calls external or metered model services |
-| `data` | It processes supplied, personal, confidential, third-party, or persisted model data |
-| `evaluation` | It compares variants, can regress, or makes quality claims |
-| `agentic-runtime` | Model-driven behavior can call tools or create side effects |
-| `operations` | The application serves users or runs in production |
+| `model-api` | Credentials, model inventory, usage/cost, limits, retries, validation, fallback, and provider changes |
+| `data` | Provenance, access, destinations, derivatives, quality, retention, backups, and verified deletion |
+| `evaluation` | Evaluation plans, held-out data, thresholds, uncertainty, human/model judges, runs, and error analysis |
+| `agentic-runtime` | Permissions, injection/exfiltration, approvals, idempotency, compensation, isolation, and misuse cases |
+| `operations` | Ownership, service levels, limits, alerts, runbooks, releases, recovery, incidents, and regressions |
 
 ## Quick start
 

@@ -12,3 +12,16 @@ silently removing them.
 
 Before publishing a result, verify that the protocol is comparable, the dataset may be referenced, the
 metric was defined before interpretation, and limitations are explicit.
+
+Define the protocol in `EVALUATION_PLAN.md` before interpreting results. Separate the development set used
+for iteration from held-out validation, and document contamination risks. Include nominal, boundary,
+adversarial, misuse, and important failure cases in proportion to product risk.
+
+Use an acceptance threshold tied to an acceptance criterion, not the best observed run. Record sample size,
+variance or uncertainty, exclusions, missing results, and error analysis. Aggregate metrics must not hide a
+material failure for a user segment or critical case.
+
+For human evaluation, define the rubric, reviewer qualification, disagreement handling, and exposure to
+sensitive content. For model-based evaluation, record judge model/configuration, calibration evidence,
+position or verbosity effects, and known judge bias. A judge score is evidence about a protocol, not ground
+truth.

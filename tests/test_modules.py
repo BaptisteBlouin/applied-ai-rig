@@ -27,9 +27,11 @@ class ModelApiModuleTests(unittest.TestCase):
         paths, content = plan_content("model-api")
 
         self.assertIn("docs/applied-ai-rig/modules/model-api/api_usage.csv", paths)
+        self.assertIn("docs/applied-ai-rig/modules/model-api/model_register.csv", paths)
         for field in ("input_tokens", "output_tokens", "cost_basis", "retry_of"):
             self.assertIn(field, content)
-        self.assertIn("unknown", content)
+        for phrase in ("timeouts", "rate limits", "structured outputs", "fallback", "retention", "rotation", "unknown"):
+            self.assertIn(phrase, content.lower())
         self.assertNotIn("api_key,", content.lower())
 
 
@@ -40,6 +42,8 @@ class DataModuleTests(unittest.TestCase):
         self.assertIn("docs/applied-ai-rig/modules/data/data_register.csv", paths)
         for phrase in ("provenance", "derived artifacts", "allowed destinations", "deletion"):
             self.assertIn(phrase, content.lower())
+        for phrase in ("access control", "logs", "backups", "license", "data quality", "prompt injection", "deletion verification"):
+            self.assertIn(phrase, content.lower())
         self.assertIn("does not prove anonymization", content.lower())
 
 
@@ -48,25 +52,34 @@ class EvaluationModuleTests(unittest.TestCase):
         paths, content = plan_content("evaluation")
 
         self.assertIn("docs/applied-ai-rig/modules/evaluation/experiments.csv", paths)
+        self.assertIn("docs/applied-ai-rig/modules/evaluation/EVALUATION_PLAN.md", paths)
         for field in ("run_id", "decision_id", "code_revision", "dataset_version", "evidence_id"):
             self.assertIn(field, content)
         self.assertIn("external system", content.lower())
+        for phrase in ("acceptance threshold", "sample size", "uncertainty", "human evaluation", "judge bias", "adversarial", "development set", "error analysis"):
+            self.assertIn(phrase, content.lower())
 
 
 class AgenticRuntimeModuleTests(unittest.TestCase):
     def test_agentic_module_records_approval_and_side_effect_boundaries(self) -> None:
-        _, content = plan_content("agentic-runtime")
+        paths, content = plan_content("agentic-runtime")
 
+        self.assertIn("docs/applied-ai-rig/modules/agentic-runtime/misuse_cases.csv", paths)
         for phrase in ("side effect", "human approval", "bounded consumption", "tool arguments"):
+            self.assertIn(phrase, content.lower())
+        for phrase in ("prompt injection", "data exfiltration", "authorization", "idempotency", "compensation", "sandbox", "kill switch", "tool results"):
             self.assertIn(phrase, content.lower())
         self.assertIn("not a runtime policy engine", content.lower())
 
 
 class OperationsModuleTests(unittest.TestCase):
     def test_operations_module_covers_run_ownership_and_recovery(self) -> None:
-        _, content = plan_content("operations")
+        paths, content = plan_content("operations")
 
+        self.assertIn("docs/applied-ai-rig/modules/operations/service_register.csv", paths)
         for phrase in ("owner", "health", "operating limit", "rollback", "incident"):
+            self.assertIn(phrase, content.lower())
+        for phrase in ("service level", "alert", "runbook", "circuit breaker", "budget", "backup", "restore", "post-incident", "behavioral regression"):
             self.assertIn(phrase, content.lower())
         self.assertIn("does not deploy", content.lower())
 

@@ -7,7 +7,20 @@ Read in this order:
 1. [Operating principles](OPERATING_PRINCIPLES.md)
 2. [Decisions](DECISIONS.md)
 3. [Evidence](EVIDENCE.md)
+4. [Worklog](WORKLOG.md)
+5. [Delivery checklist](DELIVERY_CHECKLIST.md)
 {{MODULE_LINKS}}
+
+## How the records fit together
+
+- Put requirements and acceptance criteria in their canonical project source; link them from the worklog.
+- Use the worklog for chronological implementation facts, hypotheses, failed attempts, and next steps.
+- Promote consequential decisions to `DECISIONS.md`; do not bury them in the worklog.
+- Put claims and their reproducible support in `EVIDENCE.md`, linking detailed traces in canonical tools.
+- Use selected modules for risk-specific inventories and checks.
+
+Update records as the work changes. A final documentation pass cannot reliably reconstruct discarded
+alternatives, unknowns, API consumption, or data movement.
 
 The records support engineering review. They do not certify security, safety, compliance, or production
 readiness.

@@ -52,7 +52,9 @@ class CoreTemplateTests(unittest.TestCase):
                 "docs/applied-ai-rig/README.md",
                 "docs/applied-ai-rig/OPERATING_PRINCIPLES.md",
                 "docs/applied-ai-rig/DECISIONS.md",
+                "docs/applied-ai-rig/DELIVERY_CHECKLIST.md",
                 "docs/applied-ai-rig/EVIDENCE.md",
+                "docs/applied-ai-rig/WORKLOG.md",
             },
         )
 
@@ -65,6 +67,23 @@ class CoreTemplateTests(unittest.TestCase):
             self.assertIn(field, content)
         self.assertNotIn("OpenAI", content)
         self.assertNotIn("LangChain", content)
+
+    def test_core_defines_the_full_work_cycle_and_handoff_rules(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            plan = build_plan(Path(directory), core_profile(), ROOT / "templates")
+
+        content = "\n".join(item.content for item in plan.files).lower()
+        for phrase in (
+            "before implementation",
+            "during implementation",
+            "before delivery",
+            "consequential decision",
+            "failed attempts",
+            "canonical source",
+            "acceptance criteria",
+            "residual risks",
+        ):
+            self.assertIn(phrase, content)
 
 
 class ClassificationTests(unittest.TestCase):
