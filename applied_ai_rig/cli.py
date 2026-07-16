@@ -235,7 +235,7 @@ def _is_workflow_command(raw_args: Sequence[str]) -> bool:
         return False
     if len(raw_args) > 1:
         return True
-    return Path(".applied-ai-rig/profile.json").is_file()
+    return True
 
 
 def _workflow_parser() -> argparse.ArgumentParser:
@@ -289,7 +289,10 @@ def _workflow_main(raw_args: Sequence[str]) -> int:
     try:
         if args.command == "status":
             status = project_status(Path(args.target))
-            modules = ", ".join(status.selected_modules) or "core only"
+            if status.selected_modules is None:
+                modules = "unknown (profile and manifest are unreadable)"
+            else:
+                modules = ", ".join(status.selected_modules) or "core only"
             health = "healthy" if not status.check.errors else "needs attention"
             print(f"Applied AI Rig status for {status.target}")
             print(f"Modules: {modules}")
@@ -304,7 +307,8 @@ def _workflow_main(raw_args: Sequence[str]) -> int:
                 )
             print("Records:")
             for name, count in status.counts.items():
-                print(f"  {name}: {count}")
+                displayed_count = "unknown" if count is None else str(count)
+                print(f"  {name}: {displayed_count}")
             print("Next:")
             if status.next_command is None:
                 print(f"  {status.next_instruction}")

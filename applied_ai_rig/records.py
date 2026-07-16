@@ -35,6 +35,16 @@ REGISTER_COUNT_NAMES = {
     "incident_register.csv": "incidents",
     "service_register.csv": "services",
 }
+REGISTER_STATUS_PATHS = {
+    "api_usage": ("model-api", "docs/applied-ai-rig/modules/model-api/api_usage.csv"),
+    "models": ("model-api", "docs/applied-ai-rig/modules/model-api/model_register.csv"),
+    "data": ("data", "docs/applied-ai-rig/modules/data/data_register.csv"),
+    "experiments": ("evaluation", "docs/applied-ai-rig/modules/evaluation/experiments.csv"),
+    "actions": ("agentic-runtime", "docs/applied-ai-rig/modules/agentic-runtime/action_register.csv"),
+    "misuse_cases": ("agentic-runtime", "docs/applied-ai-rig/modules/agentic-runtime/misuse_cases.csv"),
+    "incidents": ("operations", "docs/applied-ai-rig/modules/operations/incident_register.csv"),
+    "services": ("operations", "docs/applied-ai-rig/modules/operations/service_register.csv"),
+}
 
 
 class RecordError(RuntimeError):
@@ -63,9 +73,9 @@ class RecordChange:
 @dataclass(frozen=True)
 class ProjectStatus:
     target: Path
-    selected_modules: tuple[str, ...]
+    selected_modules: tuple[str, ...] | None
     check: CheckResult
-    counts: Mapping[str, int]
+    counts: Mapping[str, int | None]
     next_command: tuple[str, ...] | None
     next_instruction: str
 
@@ -361,12 +371,55 @@ def apply_record_change(change: RecordChange) -> None:
             staged_path.unlink(missing_ok=True)
 
 
-def _csv_record_count(path: Path) -> int:
+def _csv_record_count(path: Path) -> int | None:
     try:
         rows = list(csv.reader(path.read_text(encoding="utf-8").splitlines()))
     except (OSError, UnicodeError, csv.Error):
-        return 0
+        return None
     return max(0, len(rows) - 1)
+
+
+def _markdown_record_count(path: Path, pattern: re.Pattern[str]) -> int | None:
+    try:
+        content = path.read_text(encoding="utf-8")
+    except (OSError, UnicodeError):
+        return None
+    return len(pattern.findall(content))
+
+
+def _read_profile_if_valid(path: Path) -> Profile | None:
+    try:
+        return Profile.from_json(path.read_text(encoding="utf-8"))
+    except (OSError, UnicodeError, ValueError):
+        return None
+
+
+def _read_manifest_if_valid(path: Path) -> Manifest | None:
+    try:
+        return Manifest.from_json(path.read_text(encoding="utf-8"))
+    except (OSError, UnicodeError, ValueError):
+        return None
+
+
+def _best_effort_counts(
+    target: Path, selected_modules: tuple[str, ...] | None
+) -> dict[str, int | None]:
+    counts: dict[str, int | None] = {
+        "decisions": _markdown_record_count(
+            target / "docs/applied-ai-rig/DECISIONS.md", DECISION_ENTRY
+        ),
+        "evidence": _markdown_record_count(
+            target / "docs/applied-ai-rig/EVIDENCE.md", EVIDENCE_ENTRY
+        ),
+    }
+    if selected_modules is None:
+        return counts
+    for count_name, (module_id, relative_path) in REGISTER_STATUS_PATHS.items():
+        if module_id in selected_modules:
+            counts[count_name] = _csv_record_count(
+                target.joinpath(*Path(relative_path).parts)
+            )
+    return counts
 
 
 def project_status(target: Path) -> ProjectStatus:
@@ -379,11 +432,20 @@ def project_status(target: Path) -> ProjectStatus:
     try:
         target, profile, manifest = _load_installation(target)
     except RecordError:
+        recovered_profile = _read_profile_if_valid(profile_path)
+        recovered_manifest = _read_manifest_if_valid(manifest_path)
+        selected_modules = (
+            recovered_profile.selected_modules
+            if recovered_profile is not None
+            else recovered_manifest.selected_modules
+            if recovered_manifest is not None
+            else None
+        )
         return ProjectStatus(
             target=target,
-            selected_modules=(),
+            selected_modules=selected_modules,
             check=check,
-            counts={"decisions": 0, "evidence": 0},
+            counts=_best_effort_counts(target, selected_modules),
             next_command=(str(target), "--check"),
             next_instruction="",
         )
@@ -395,7 +457,7 @@ def project_status(target: Path) -> ProjectStatus:
     )
     decision_ids = DECISION_ENTRY.findall(decisions)
     evidence_ids = EVIDENCE_ENTRY.findall(evidence)
-    counts: dict[str, int] = {
+    counts: dict[str, int | None] = {
         "decisions": len(decision_ids),
         "evidence": len(evidence_ids),
     }

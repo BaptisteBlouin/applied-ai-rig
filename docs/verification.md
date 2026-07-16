@@ -27,16 +27,20 @@ standards/specification review:
   exited with code 2.
 - `status` on a partially damaged project aborted instead of reporting an
   unhealthy state.
+- Bare `status` outside an installed project fell back to the installer instead
+  of returning an actionable read-only error.
+- A readable profile with a missing manifest was reported as `core only` with
+  zero counters instead of recovering the still-readable modules and records.
 - Schema assertions exposed missing overlap and compatibility constraints.
 
 ## Green phase
 
 The final V2 tree passed:
 
-- `python -m unittest discover -s tests -v`: 108 tests, 5.964 seconds, `OK`.
-- `ruff check .`: all checks passed.
-- `mypy applied_ai_rig`: success across 8 source files.
-- `python -m compileall applied_ai_rig tests`: success.
+- `python3 -m unittest discover -s tests -v`: 110 tests, 16.715 seconds, `OK`.
+- `python3 -m compileall -q init.py applied_ai_rig tests`: success.
+- `ruff check init.py applied_ai_rig tests`: all checks passed.
+- `mypy`: success across the 9 configured source files, including `init.py`.
 - JSON schema syntax and behaviour checks, including profile overlap rejection
   and legacy manifest compatibility.
 - YAML parsing for the composite action and issue forms.

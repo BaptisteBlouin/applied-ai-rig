@@ -153,6 +153,8 @@ class CliSmokeTests(unittest.TestCase):
 
         self.assertEqual(result.returncode, 1, result.stderr)
         self.assertIn("manifest.json is missing", result.stdout)
+        self.assertIn("Modules: unknown", result.stdout)
+        self.assertIn("decisions: unknown", result.stdout)
 
     def test_legacy_targets_named_status_or_add_still_install(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
@@ -194,6 +196,67 @@ class CliSmokeTests(unittest.TestCase):
         self.assertEqual(install.returncode, 0, install.stderr)
         self.assertEqual(status.returncode, 0, status.stderr)
         self.assertIn("Applied AI Rig status", status.stdout)
+
+    def test_status_without_target_never_falls_back_to_installation(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            target = Path(directory)
+            status = subprocess.run(
+                [sys.executable, str(ROOT / "init.py"), "status"],
+                cwd=target,
+                capture_output=True,
+                text=True,
+                check=False,
+            )
+
+            entries = list(target.iterdir())
+
+        self.assertEqual(status.returncode, 2)
+        self.assertIn("not installed", status.stderr)
+        self.assertNotIn("Traceback", status.stderr)
+        self.assertEqual(entries, [])
+
+    def test_status_recovers_modules_and_counts_when_manifest_is_missing(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            install = self.run_cli(
+                directory, "--modules", "evaluation", "--non-interactive"
+            )
+            decision = self.run_cli(
+                "add",
+                "decision",
+                directory,
+                "--id",
+                "DEC-001",
+                "--title",
+                "Choose a model",
+                "--yes",
+            )
+            experiment = self.run_cli(
+                "add",
+                "experiment",
+                directory,
+                "--run-id",
+                "RUN-001",
+                "--decision",
+                "DEC-001",
+                "--model",
+                "model-a",
+                "--metric",
+                "accuracy",
+                "--value",
+                "0.91",
+                "--yes",
+            )
+            (Path(directory) / ".applied-ai-rig/manifest.json").unlink()
+
+            status = self.run_cli("status", directory)
+
+        self.assertEqual(install.returncode, 0, install.stderr)
+        self.assertEqual(decision.returncode, 0, decision.stderr)
+        self.assertEqual(experiment.returncode, 0, experiment.stderr)
+        self.assertEqual(status.returncode, 1, status.stderr)
+        self.assertIn("Modules: evaluation", status.stdout)
+        self.assertIn("decisions: 1", status.stdout)
+        self.assertIn("experiments: 1", status.stdout)
 
     def test_add_decision_previews_by_default_and_writes_with_yes(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
