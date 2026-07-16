@@ -1,0 +1,33 @@
+name: Feature request
+description: Propose a scoped improvement to an existing workflow
+title: "feature: "
+labels: [enhancement]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: Applied-AI engineering problem
+      description: Describe the recurring problem before proposing a solution.
+    validations:
+      required: true
+  - type: textarea
+    id: evidence
+    attributes:
+      label: Evidence and affected users
+      description: Who encounters it and what real example shows that the current workflow is insufficient?
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Smallest useful change
+      description: Include alternatives and explain why documentation or composition is insufficient.
+    validations:
+      required: true
+  - type: textarea
+    id: compatibility
+    attributes:
+      label: Compatibility and non-goals
+      description: Note effects on schemas, paths, modules, dependencies, offline use, and safe re-runs.
+    validations:
+      required: true

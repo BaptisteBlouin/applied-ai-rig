@@ -2,6 +2,25 @@
 
 This directory is the engineering record for **{{PROJECT_NAME}}**.
 
+## First 15 minutes
+
+The goal is one real decision with enough evidence to review it later. Do not complete every field or
+register before the project needs it.
+
+1. Pick a consequential choice you are making now: a model, dataset, evaluation threshold, tool
+   permission, operating limit, or fallback.
+2. Add it to [Decisions](DECISIONS.md). If the initializer command is installed, preview a skeleton with
+   `applied-ai-rig add decision . --id DEC-YYYYMMDD-short-name --title "Describe the choice"` and apply it
+   only after review with `--yes`.
+3. Put one measured, estimated, or explicitly unknown claim in [Evidence](EVIDENCE.md) and link it to the
+   decision. The optional `add evidence` command can create the skeleton.
+4. Record only the risk-specific module fields needed to explain that decision. Leave detailed telemetry
+   in its canonical tool.
+5. Use the [delivery checklist](DELIVERY_CHECKLIST.md) at the next meaningful review or handoff.
+
+Run `applied-ai-rig status .` when the command is available to see structural health, record counts, and
+the next useful action. The files remain fully usable by hand when the initializer is not installed.
+
 Read in this order:
 
 1. [Operating principles](OPERATING_PRINCIPLES.md)

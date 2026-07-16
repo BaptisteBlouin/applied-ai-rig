@@ -1,4 +1,5 @@
 import argparse
+import shlex
 import sys
 from collections.abc import Sequence
 from datetime import datetime, timezone
@@ -18,6 +19,15 @@ from .installer import (
 )
 from .intake import MODULE_IDS, MODULE_INFO, QUESTIONS, SETUP_PROFILES, recommend_modules
 from .manifest import Manifest, Profile
+from .records import (
+    RecordChange,
+    RecordError,
+    apply_record_change,
+    project_status,
+    propose_decision,
+    propose_evidence,
+    propose_experiment,
+)
 from .web_setup import WebSetupCancelled, WebSetupResult, plan_payload, run_web_setup
 
 
@@ -25,6 +35,7 @@ def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         prog="init.py",
         description="Install Applied AI Rig into an applied-AI project.",
+        epilog="Daily workflow: applied-ai-rig status [target] or applied-ai-rig add --help",
     )
     parser.add_argument("target", nargs="?", default=".", help="Target project directory")
     parser.add_argument("--dry-run", action="store_true", help="Preview without writing files")
@@ -44,8 +55,11 @@ def build_parser() -> argparse.ArgumentParser:
 
 
 def main(argv: Sequence[str] | None = None) -> int:
+    raw_args = list(argv) if argv is not None else sys.argv[1:]
+    if raw_args and raw_args[0] in {"status", "add"}:
+        return _workflow_main(raw_args)
     parser = build_parser()
-    args = parser.parse_args(argv)
+    args = parser.parse_args(raw_args)
     target = Path(args.target)
     metadata = target / ".applied-ai-rig"
     profile_path = metadata / "profile.json"
@@ -189,7 +203,151 @@ def main(argv: Sequence[str] | None = None) -> int:
     except InstallationCancelled as error:
         print(str(error), file=sys.stderr)
         return 2
+    _print_installation_next_steps(target)
     return 0
+
+
+def _workflow_parser() -> argparse.ArgumentParser:
+    parser = argparse.ArgumentParser(
+        prog="applied-ai-rig",
+        description="Inspect an installed Rig or safely add a decision-relevant record.",
+    )
+    commands = parser.add_subparsers(dest="command", required=True)
+    status = commands.add_parser("status", help="Show structural health, record counts, and the next action")
+    status.add_argument("target", nargs="?", default=".")
+
+    add = commands.add_parser("add", help="Preview or append a record")
+    record_types = add.add_subparsers(dest="record_type", required=True)
+
+    decision = record_types.add_parser("decision", help="Add a proposed decision skeleton")
+    _add_record_target_and_write_mode(decision)
+    decision.add_argument("--id", required=True, dest="record_id")
+    decision.add_argument("--title", required=True)
+    decision.add_argument(
+        "--status",
+        choices=("proposed", "accepted", "superseded", "rejected"),
+        default="proposed",
+    )
+
+    evidence = record_types.add_parser("evidence", help="Add evidence linked to a decision")
+    _add_record_target_and_write_mode(evidence)
+    evidence.add_argument("--id", required=True, dest="record_id")
+    evidence.add_argument("--claim", required=True)
+    evidence.add_argument("--decision", required=True, dest="decision_id")
+    evidence.add_argument(
+        "--status",
+        choices=("measured", "estimated", "unknown"),
+        default="unknown",
+    )
+
+    experiment = record_types.add_parser("experiment", help="Add a row to experiments.csv")
+    _add_record_target_and_write_mode(experiment)
+    experiment.add_argument("--run-id", required=True)
+    experiment.add_argument("--decision", required=True, dest="decision_id")
+    experiment.add_argument("--model", required=True)
+    experiment.add_argument("--metric", required=True)
+    experiment.add_argument("--value", required=True)
+    return parser
+
+
+def _add_record_target_and_write_mode(parser: argparse.ArgumentParser) -> None:
+    parser.add_argument("target", nargs="?", default=".")
+    mode = parser.add_mutually_exclusive_group()
+    mode.add_argument("--yes", action="store_true", help="Apply the previewed append")
+    mode.add_argument("--dry-run", action="store_true", help="Preview only; this is the default")
+
+
+def _workflow_main(raw_args: Sequence[str]) -> int:
+    parser = _workflow_parser()
+    args = parser.parse_args(raw_args)
+    try:
+        if args.command == "status":
+            status = project_status(Path(args.target))
+            modules = ", ".join(status.selected_modules) or "core only"
+            health = "healthy" if not status.check.errors else "needs attention"
+            print(f"Applied AI Rig status for {status.target}")
+            print(f"Modules: {modules}")
+            print(
+                f"Structural health: {health} "
+                f"({len(status.check.errors)} error(s), {len(status.check.warnings)} warning(s))"
+            )
+            print("Records:")
+            for name, count in status.counts.items():
+                print(f"  {name}: {count}")
+            print("Next:")
+            if status.next_command is None:
+                print(f"  {status.next_instruction}")
+            else:
+                print(f"  {_format_workflow_command(status.next_command)}")
+            return 1 if status.check.errors else 0
+
+        change = _propose_record(args)
+        if not args.yes:
+            print(f"Preview: append to {change.relative_path}\n")
+            print(change.addition, end="")
+            print("\nNo files changed. Re-run the command with --yes to apply this append.")
+            return 0
+        apply_record_change(change)
+        print(f"Added {change.record_id} to {change.relative_path}.")
+        return 0
+    except RecordError as error:
+        print(str(error), file=sys.stderr)
+        return 2
+
+
+def _propose_record(args: argparse.Namespace) -> RecordChange:
+    target = Path(args.target)
+    if args.record_type == "decision":
+        return propose_decision(target, args.record_id, args.title, args.status)
+    if args.record_type == "evidence":
+        return propose_evidence(
+            target,
+            args.record_id,
+            args.claim,
+            args.decision_id,
+            args.status,
+        )
+    timestamp = datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")
+    return propose_experiment(
+        target,
+        args.run_id,
+        args.decision_id,
+        args.model,
+        args.metric,
+        args.value,
+        timestamp,
+    )
+
+
+def _command_prefix() -> tuple[str, ...]:
+    executable = Path(sys.argv[0])
+    if executable.name == "init.py":
+        return (sys.executable, str(executable.resolve(strict=False)))
+    return (executable.name or "applied-ai-rig",)
+
+
+def _format_workflow_command(command: Sequence[str]) -> str:
+    return shlex.join((*_command_prefix(), *command))
+
+
+def _print_installation_next_steps(target: Path) -> None:
+    resolved = str(target.resolve(strict=False))
+    print("\nNext:")
+    print(f"  {_format_workflow_command(('status', resolved))}")
+    print(
+        "  "
+        + _format_workflow_command(
+            (
+                "add",
+                "decision",
+                resolved,
+                "--id",
+                "DEC-YYYYMMDD-short-name",
+                "--title",
+                "Describe the choice",
+            )
+        )
+    )
 
 
 def _use_web_interface(args: argparse.Namespace) -> bool:

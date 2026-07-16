@@ -121,8 +121,18 @@ class ModuleCompositionTests(unittest.TestCase):
             "sensitive",
             "api_usage.csv",
             "experiments.csv",
+            "minimum useful first entry",
+            "leave a field empty only",
+            "progressive completion",
         ):
             self.assertIn(phrase, guidance)
+
+    def test_each_module_explains_which_fields_to_complete_first(self) -> None:
+        modules = ("model-api", "data", "evaluation", "agentic-runtime", "operations")
+        paths, content = plan_content(*modules)
+
+        self.assertTrue(paths)
+        self.assertEqual(content.lower().count("start with these fields"), len(modules))
 
     def test_core_only_has_no_optional_module_paths_or_links(self) -> None:
         paths, content = plan_content()

@@ -1,0 +1,41 @@
+name: Bug report
+description: Report reproducible incorrect or unsafe behavior
+title: "bug: "
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: Do not include secrets, personal data, prompts, responses, private endpoints, or confidential project content.
+  - type: input
+    id: version
+    attributes:
+      label: Applied AI Rig version
+      placeholder: 0.2.0
+    validations:
+      required: true
+  - type: input
+    id: environment
+    attributes:
+      label: Environment
+      description: Operating system and Python version
+    validations:
+      required: true
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Minimal reproduction
+      description: Include the command, safe fixture setup, actual result, and expected result.
+    validations:
+      required: true
+  - type: textarea
+    id: check
+    attributes:
+      label: Structural-check output
+      description: Paste safe output from `python3 init.py --check <target>` when applicable.
+  - type: checkboxes
+    id: safety
+    attributes:
+      label: Content check
+      options:
+        - label: I removed secrets, sensitive content, and private identifiers from this report.
+          required: true

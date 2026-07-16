@@ -1,0 +1,40 @@
+name: Module proposal
+description: Propose a risk module only when the existing five cannot represent the problem
+title: "module: "
+labels: [module-proposal]
+body:
+  - type: textarea
+    id: risk
+    attributes:
+      label: Distinct risk boundary
+      description: What observable project risk cannot be composed from model-api, data, evaluation, agentic-runtime, and operations?
+    validations:
+      required: true
+  - type: textarea
+    id: examples
+    attributes:
+      label: Real project examples
+      description: Provide at least two independent examples without sensitive content.
+    validations:
+      required: true
+  - type: textarea
+    id: records
+    attributes:
+      label: Decision-relevant records
+      description: Define the proposed record grain, stable IDs, minimum useful fields, prohibited content, and externalization trigger.
+    validations:
+      required: true
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Composition and canonical alternatives
+      description: Explain why links to existing modules or canonical tools do not solve the problem.
+    validations:
+      required: true
+  - type: checkboxes
+    id: boundaries
+    attributes:
+      label: Product boundaries
+      options:
+        - label: This proposal does not require runtime enforcement, telemetry, secrets, provider coupling, or compliance claims.
+          required: true

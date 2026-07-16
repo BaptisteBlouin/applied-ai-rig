@@ -5,6 +5,12 @@ Use this module when the application calls external or metered model services.
 Follow the shared [register guidance](../../REGISTER_GUIDANCE.md). In particular, `api_usage.csv` records
 decision-relevant aggregates by run, release, workload, or billing period; it must not become a request log.
 
+## Start with these fields
+
+For the first model decision, record `model_id`, `owner`, `provider`, `model`, `purpose`, and `decision_id`.
+Add credential boundaries, retention, limits, validation, fallback, and evidence before the integration is
+relied on. Add one `api_usage.csv` aggregate only when usage or cost informs a decision or reconciliation.
+
 ## Boundaries
 
 - Load credentials from an approved secret mechanism. Never record their values here.

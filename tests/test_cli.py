@@ -107,6 +107,83 @@ class CliSmokeTests(unittest.TestCase):
         self.assertEqual(install.returncode, 0, install.stderr)
         self.assertEqual(check.returncode, 0, check.stdout + check.stderr)
         self.assertIn("Structural check completed", check.stdout)
+        self.assertIn("Next:", install.stdout)
+        self.assertIn("status", install.stdout)
+
+    def test_status_command_reports_health_records_and_next_action(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            install = self.run_cli(
+                directory, "--modules", "evaluation", "--non-interactive"
+            )
+            status = self.run_cli("status", directory)
+
+        self.assertEqual(install.returncode, 0, install.stderr)
+        self.assertEqual(status.returncode, 0, status.stderr)
+        self.assertIn("Structural health: healthy", status.stdout)
+        self.assertIn("decisions: 0", status.stdout)
+        self.assertIn("experiments: 0", status.stdout)
+        self.assertIn("add decision", status.stdout)
+
+    def test_add_decision_previews_by_default_and_writes_with_yes(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            install = self.run_cli(directory, "--modules", "none", "--non-interactive")
+            path = Path(directory) / "docs/applied-ai-rig/DECISIONS.md"
+            before = path.read_text(encoding="utf-8")
+
+            preview = self.run_cli(
+                "add",
+                "decision",
+                directory,
+                "--id",
+                "DEC-20260716-model-choice",
+                "--title",
+                "Choose the initial model",
+            )
+            after_preview = path.read_text(encoding="utf-8")
+            write = self.run_cli(
+                "add",
+                "decision",
+                directory,
+                "--id",
+                "DEC-20260716-model-choice",
+                "--title",
+                "Choose the initial model",
+                "--yes",
+            )
+            final = path.read_text(encoding="utf-8")
+
+        self.assertEqual(install.returncode, 0, install.stderr)
+        self.assertEqual(preview.returncode, 0, preview.stderr)
+        self.assertEqual(after_preview, before)
+        self.assertIn("Preview", preview.stdout)
+        self.assertIn("--yes", preview.stdout)
+        self.assertEqual(write.returncode, 0, write.stderr)
+        self.assertIn("Added DEC-20260716-model-choice", write.stdout)
+        self.assertIn("DEC-20260716-model-choice", final)
+
+    def test_add_experiment_explains_when_module_is_missing(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            install = self.run_cli(directory, "--modules", "none", "--non-interactive")
+            result = self.run_cli(
+                "add",
+                "experiment",
+                directory,
+                "--run-id",
+                "RUN-001",
+                "--decision",
+                "DEC-001",
+                "--model",
+                "model-a",
+                "--metric",
+                "accuracy",
+                "--value",
+                "0.91",
+                "--yes",
+            )
+
+        self.assertEqual(install.returncode, 0, install.stderr)
+        self.assertEqual(result.returncode, 2)
+        self.assertIn("evaluation module", result.stderr)
 
     def test_non_interactive_install_works_with_non_ascii_target(self) -> None:
         with tempfile.TemporaryDirectory() as directory:

@@ -18,6 +18,8 @@ dev = ["ruff", "mypy"]
 [project.urls]
 Homepage = "https://github.com/BaptisteBlouin/applied-ai-rig"
 Repository = "https://github.com/BaptisteBlouin/applied-ai-rig"
+Changelog = "https://github.com/BaptisteBlouin/applied-ai-rig/blob/main/CHANGELOG.md"
+Issues = "https://github.com/BaptisteBlouin/applied-ai-rig/issues"
 
 [project.scripts]
 applied-ai-rig = "applied_ai_rig.cli:main"

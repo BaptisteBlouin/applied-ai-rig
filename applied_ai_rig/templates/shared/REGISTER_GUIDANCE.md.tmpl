@@ -45,6 +45,28 @@ Before adding rows, define:
 Do not silently delete invalid, failed, declined, or superseded records when they remain relevant to an
 engineering decision. Mark their state and link the evidence or decision that explains it.
 
+## Progressive completion
+
+The full CSV header is the stable schema, not a demand to complete every column immediately. Start with the
+minimum useful first entry below, then complete additional fields when a decision, claim, risk, review, or
+operating responsibility needs them. Use `unknown` when the absence itself matters. Leave a field empty only
+when it is truly not applicable or the module guidance defines an empty value.
+
+| Register | Minimum useful first entry |
+|---|---|
+| `model_register.csv` | `model_id`, `owner`, `provider`, `model`, `purpose`, `decision_id` |
+| `api_usage.csv` | `timestamp_utc`, `run_id`, `provider`, `model`, `measurement`, usage or cost fields, `evidence_id` |
+| `data_register.csv` | `data_id`, `owner`, `provenance`, `purpose`, `classification`, `allowed_destinations`, `decision_id` |
+| `experiments.csv` | `timestamp_utc`, `run_id`, `decision_id`, `model`, `hypothesis`, `primary_metric`, `primary_value`, `result` |
+| `action_register.csv` | `action_id`, `tool`, `side_effect`, `resource_scope`, `permission`, `human_approval`, `decision_id` |
+| `misuse_cases.csv` | `case_id`, `asset_or_goal`, `scenario`, `expected_prevention`, `response`, `residual_risk` |
+| `service_register.csv` | `service_id`, `owner`, `users_or_consumers`, `health_signals`, `operating_limits`, `degraded_mode`, `rollback_reference` |
+| `incident_register.csv` | `incident_id`, `opened_at`, `status`, `owner`, `impact`, `mitigation`, `rollback` |
+
+Progressive completion reduces ceremony; it does not turn an unknown into evidence. Before a row supports a
+published claim, release, access decision, or incident closure, complete every field needed to review that
+specific use and link the canonical sources.
+
 ## Scale and externalization triggers
 
 Move the system of record out of Git when any of these conditions becomes material:

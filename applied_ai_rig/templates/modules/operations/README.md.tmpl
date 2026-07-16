@@ -5,6 +5,12 @@ Use this module when the application serves users or runs as an operated service
 Follow the shared [register guidance](../../REGISTER_GUIDANCE.md). Registers index operated workloads and
 incident summaries; health samples, alerts, logs, and detailed timelines stay in their canonical tools.
 
+## Start with these fields
+
+For the first operated workload, record `service_id`, `owner`, `users_or_consumers`, `health_signals`,
+`operating_limits`, `degraded_mode`, and `rollback_reference`. Add service levels, alerts, dependencies,
+budgets, recovery evidence, and incident links before relying on them in production decisions.
+
 Record the accountable owner, service health signal, operating limits, observability source, release and
 rollback procedure, incident path, data dependencies, and model-provider dependencies. A health check should
 answer an operational question rather than expose internals or trigger expensive model calls.

@@ -1,0 +1,63 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/BaptisteBlouin/applied-ai-rig/schemas/profile.schema.json",
+  "title": "Applied AI Rig project profile",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "rig_version",
+    "answers",
+    "selected_modules",
+    "declined_modules",
+    "recommendation_reasons"
+  ],
+  "properties": {
+    "schema_version": {
+      "const": 1
+    },
+    "rig_version": {
+      "type": "string",
+      "minLength": 1
+    },
+    "answers": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "boolean"
+      }
+    },
+    "selected_modules": {
+      "$ref": "#/$defs/modules"
+    },
+    "declined_modules": {
+      "$ref": "#/$defs/modules"
+    },
+    "recommendation_reasons": {
+      "type": "object",
+      "propertyNames": {
+        "$ref": "#/$defs/moduleId"
+      },
+      "additionalProperties": {
+        "type": "string"
+      }
+    }
+  },
+  "$defs": {
+    "moduleId": {
+      "enum": [
+        "model-api",
+        "data",
+        "evaluation",
+        "agentic-runtime",
+        "operations"
+      ]
+    },
+    "modules": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {
+        "$ref": "#/$defs/moduleId"
+      }
+    }
+  }
+}

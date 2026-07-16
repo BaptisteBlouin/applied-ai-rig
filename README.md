@@ -1,10 +1,52 @@
 # Applied AI Rig
 
-Applied AI Rig installs a lightweight, modular engineering record for the models, data, experiments,
-costs, and decisions behind an AI-enabled application.
+**Make consequential AI changes reviewable by humans and coding agents.**
 
-It gives humans and coding agents enough durable evidence to understand why an applied-AI system was built
-the way it was, without requiring a governance platform or imposing an application stack.
+Applied AI Rig keeps the reason behind a model, dataset, evaluation, tool permission, cost limit, or
+fallback in the repository. It connects decisions to evidence and risk-specific records without requiring
+a governance platform or imposing an application stack.
+
+## The problem it solves
+
+An AI-enabled application can keep working while its engineering context disappears: why a model was
+selected, which evaluation justified a threshold, where data may go, who approved a side effect, what a
+fallback costs, or which result would reverse a decision. Chat history and agent context are not durable
+project memory.
+
+Applied AI Rig installs a small review path for that context:
+
+```text
+decision -> evidence -> model/data/evaluation/action/operation record -> canonical detail
+```
+
+The detailed trace can remain in an experiment tracker, billing system, observability tool, or incident
+system. The repository retains only the safe evidence needed to understand and revisit the choice.
+
+## A concrete example
+
+A team changes a RAG application from lexical-only to hybrid retrieval. Instead of committing only the
+configuration change, it records:
+
+- the accepted decision and the recall or cost threshold that would reverse it;
+- the comparable baseline and candidate run IDs;
+- the measured claim, dataset scope, and known limitations;
+- safe references to the full experiment and usage records.
+
+Months later, a reviewer or coding agent can tell why the change happened without access to the original
+conversation. See the filled [RAG example](examples/rag-assistant/README.md),
+[tool-agent example](examples/tool-agent/README.md), and
+[production-service example](examples/production-service/README.md).
+
+## Fit
+
+Applied AI Rig is intended for individual developers and small teams whose application uses models, data,
+evaluations, model-directed actions, or production AI services. Start with one real decision; do not fill
+every register pre-emptively.
+
+It is probably unnecessary for a throwaway experiment with no consequential claim or handoff. It is also
+the wrong tool when an existing system already provides the same decision-to-evidence chain, or when the
+need is runtime tracing, authorization enforcement, secret storage, legal advice, or compliance
+certification.
 
 ## What it generates
 
@@ -39,11 +81,10 @@ Applied AI Rig requires Python 3.10 or later and uses only the standard library.
 ```bash
 git clone https://github.com/BaptisteBlouin/applied-ai-rig.git
 cd applied-ai-rig
-python init.py /path/to/your-project
+python3 init.py /path/to/your-project
 ```
 
-On systems where the launcher is named `python3` (most Linux and macOS installations), run
-`python3 init.py …` in place of `python init.py …` throughout this guide.
+On Windows, use `py init.py …` when `python3` is not the configured launcher.
 
 To install it as a reusable command instead of running from a clone:
 
@@ -52,18 +93,18 @@ pipx install git+https://github.com/BaptisteBlouin/applied-ai-rig.git
 applied-ai-rig /path/to/your-project
 ```
 
-The installed `applied-ai-rig` command accepts the same arguments as `python init.py`.
+The installed `applied-ai-rig` command accepts the same arguments as `python3 init.py`.
 
 Review the proposed modules and files before confirming. For a preview that writes nothing:
 
 ```bash
-python init.py /path/to/your-project --dry-run
+python3 init.py /path/to/your-project --dry-run
 ```
 
 For scripted installation with explicit modules:
 
 ```bash
-python init.py /path/to/your-project \
+python3 init.py /path/to/your-project \
   --modules model-api,data,evaluation \
   --non-interactive
 ```
@@ -92,14 +133,14 @@ individual approval before the plan can be confirmed.
 Use the terminal wizard when a browser is unavailable or undesirable:
 
 ```bash
-python init.py /path/to/your-project --terminal
+python3 init.py /path/to/your-project --terminal
 ```
 
 For SSH and remote environments, start the web interface without attempting to open a browser, then open
 the printed loopback URL through the environment's normal forwarding mechanism:
 
 ```bash
-python init.py /path/to/your-project --no-browser
+python3 init.py /path/to/your-project --no-browser
 ```
 
 When standard input or output is not a TTY, the initializer keeps the deterministic terminal behavior.
@@ -108,15 +149,15 @@ When standard input or output is not a TTY, the initializer keeps the determinis
 Inspect the choices without starting the wizard:
 
 ```bash
-python init.py --list-modules
-python init.py --explain evaluation
+python3 init.py --list-modules
+python3 init.py --explain evaluation
 ```
 
 Use a quick profile directly, interactively or in automation:
 
 ```bash
-python init.py /path/to/your-project --profile api-rag
-python init.py /path/to/your-project --profile production --non-interactive
+python3 init.py /path/to/your-project --profile api-rag
+python3 init.py /path/to/your-project --profile production --non-interactive
 ```
 
 Named profiles are starting points, not claims about the project. Review the resulting modules and decline
@@ -125,11 +166,32 @@ anything that does not apply.
 ## Structural check
 
 ```bash
-python init.py --check /path/to/your-project
+python3 init.py --check /path/to/your-project
 ```
 
 The check validates the installed manifest, selected files, internal links, CSV headers, and unresolved
 template placeholders. It is a structural check, not a security assessment or compliance certification.
+
+## Daily workflow
+
+When the reusable command is installed, inspect the current record and its next useful action:
+
+```bash
+applied-ai-rig status /path/to/your-project
+```
+
+Preview a proposed decision without writing:
+
+```bash
+applied-ai-rig add decision /path/to/your-project \
+  --id DEC-20260716-model-choice \
+  --title "Choose the initial model"
+```
+
+Review the skeleton, complete it after writing, then rerun the command with `--yes`. The same safe workflow
+supports `add evidence` and, when the evaluation module is installed, `add experiment`. Appends reject
+duplicate IDs and a file that changed after preview. These commands are optional: generated Markdown and
+CSV files remain usable without the initializer.
 
 ## Safe by default
 
@@ -159,7 +221,8 @@ solely because it appears in the manifest: it may contain project-owned changes.
 
 Applied AI Rig complements specification workflows, coding-agent harnesses, experiment trackers, cloud
 billing, and runtime policy tools. It links to those canonical systems instead of duplicating their traces.
-See [coexistence guidance](docs/coexistence.md).
+See [coexistence guidance](docs/coexistence.md), [integration recipes](docs/integrations.md), and the
+[consumer CI setup](docs/ci.md).
 
 ## Non-goals
 
@@ -175,12 +238,16 @@ as an optional `dev` extra and enforced in CI:
 ```bash
 pip install -e ".[dev]"
 
-python -m unittest discover -s tests -v      # tests
-python -m compileall -q init.py applied_ai_rig tests
+python3 -m unittest discover -s tests -v      # tests
+python3 -m compileall -q init.py applied_ai_rig tests
 ruff check init.py applied_ai_rig tests      # lint
 mypy                                         # strict type check (configured in pyproject.toml)
 ```
 
 Tests run on Linux, macOS, and Windows against Python 3.10 and 3.13.
 
-The V1 specification, design explorations, and task history live on the [`v1`](../../tree/v1) branch.
+The V1 specification, design explorations, and task history live on the [`v1`](../../tree/v1) branch; the
+V2 adoption-work history lives on [`v2`](../../tree/v2). The `main` branch keeps the production surface.
+Version and migration guarantees are documented in [versioning](docs/versioning.md). See the
+[changelog](CHANGELOG.md), [roadmap](ROADMAP.md), and [contribution guide](CONTRIBUTING.md) before proposing
+a change.

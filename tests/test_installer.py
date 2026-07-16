@@ -39,6 +39,28 @@ class RendererTests(unittest.TestCase):
 
 
 class CoreTemplateTests(unittest.TestCase):
+    def test_core_readme_leads_to_a_first_useful_record_in_fifteen_minutes(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            plan = build_plan(
+                Path(directory),
+                core_profile(),
+                ROOT / "applied_ai_rig" / "templates",
+            )
+
+        readme = next(
+            item.content
+            for item in plan.files
+            if item.relative_path.as_posix() == "docs/applied-ai-rig/README.md"
+        ).lower()
+        for phrase in (
+            "first 15 minutes",
+            "one real decision",
+            "do not complete every field",
+            "add decision",
+            "delivery checklist",
+        ):
+            self.assertIn(phrase, readme)
+
     def test_core_plan_contains_only_core_and_metadata(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
             plan = build_plan(Path(directory), core_profile(), ROOT / "applied_ai_rig" / "templates")
