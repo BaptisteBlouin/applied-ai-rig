@@ -37,7 +37,7 @@ standards/specification review:
 
 The final V2 tree passed:
 
-- `python3 -m unittest discover -s tests -v`: 110 tests, 16.715 seconds, `OK`.
+- `python3 -m unittest discover -s tests -v`: 110 tests, 6.303 seconds, `OK`.
 - `python3 -m compileall -q init.py applied_ai_rig tests`: success.
 - `ruff check init.py applied_ai_rig tests`: all checks passed.
 - `mypy`: success across the 9 configured source files, including `init.py`.

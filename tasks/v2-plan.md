@@ -30,6 +30,6 @@
 
 - [x] Run focused tests throughout implementation.
 - [x] Run full tests, compilation, Ruff, and Mypy.
-- [ ] Review against repository standards and the V2 specification.
-- [ ] Commit complete implementation history to `v2`.
+- [x] Review against repository standards and the V2 specification.
+- [x] Commit complete implementation history to `v2`.
 - [ ] Integrate on `main`, remove `docs/v2-spec.md` and `tasks/v2-plan.md`, and commit the production surface.

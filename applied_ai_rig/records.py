@@ -25,25 +25,66 @@ EVIDENCE_ENTRY = re.compile(
     r"^- \*\*Evidence ID:\*\*\s+(EVD-[A-Za-z0-9][A-Za-z0-9._-]*)\s*$",
     re.MULTILINE,
 )
-REGISTER_COUNT_NAMES = {
-    "api_usage.csv": "api_usage",
-    "model_register.csv": "models",
-    "data_register.csv": "data",
-    "experiments.csv": "experiments",
-    "action_register.csv": "actions",
-    "misuse_cases.csv": "misuse_cases",
-    "incident_register.csv": "incidents",
-    "service_register.csv": "services",
-}
-REGISTER_STATUS_PATHS = {
-    "api_usage": ("model-api", "docs/applied-ai-rig/modules/model-api/api_usage.csv"),
-    "models": ("model-api", "docs/applied-ai-rig/modules/model-api/model_register.csv"),
-    "data": ("data", "docs/applied-ai-rig/modules/data/data_register.csv"),
-    "experiments": ("evaluation", "docs/applied-ai-rig/modules/evaluation/experiments.csv"),
-    "actions": ("agentic-runtime", "docs/applied-ai-rig/modules/agentic-runtime/action_register.csv"),
-    "misuse_cases": ("agentic-runtime", "docs/applied-ai-rig/modules/agentic-runtime/misuse_cases.csv"),
-    "incidents": ("operations", "docs/applied-ai-rig/modules/operations/incident_register.csv"),
-    "services": ("operations", "docs/applied-ai-rig/modules/operations/service_register.csv"),
+
+
+@dataclass(frozen=True)
+class RegisterDescriptor:
+    module_id: str
+    count_name: str
+    relative_path: str
+    next_action: str | None = None
+
+
+REGISTER_DESCRIPTORS = (
+    RegisterDescriptor(
+        "model-api",
+        "api_usage",
+        "docs/applied-ai-rig/modules/model-api/api_usage.csv",
+    ),
+    RegisterDescriptor(
+        "model-api",
+        "models",
+        "docs/applied-ai-rig/modules/model-api/model_register.csv",
+        "Complete the minimum useful fields in",
+    ),
+    RegisterDescriptor(
+        "data",
+        "data",
+        "docs/applied-ai-rig/modules/data/data_register.csv",
+        "Complete the minimum useful fields in",
+    ),
+    RegisterDescriptor(
+        "evaluation",
+        "experiments",
+        "docs/applied-ai-rig/modules/evaluation/experiments.csv",
+    ),
+    RegisterDescriptor(
+        "agentic-runtime",
+        "actions",
+        "docs/applied-ai-rig/modules/agentic-runtime/action_register.csv",
+        "Complete the minimum useful fields in",
+    ),
+    RegisterDescriptor(
+        "agentic-runtime",
+        "misuse_cases",
+        "docs/applied-ai-rig/modules/agentic-runtime/misuse_cases.csv",
+        "Record one representative denial path in",
+    ),
+    RegisterDescriptor(
+        "operations",
+        "incidents",
+        "docs/applied-ai-rig/modules/operations/incident_register.csv",
+    ),
+    RegisterDescriptor(
+        "operations",
+        "services",
+        "docs/applied-ai-rig/modules/operations/service_register.csv",
+        "Complete the minimum useful fields in",
+    ),
+)
+REGISTER_BY_FILENAME = {
+    Path(descriptor.relative_path).name: descriptor
+    for descriptor in REGISTER_DESCRIPTORS
 }
 
 
@@ -87,48 +128,6 @@ class ProjectStatus:
         if self.next_command is not None:
             return shlex.join(self.next_command)
         return self.next_instruction
-
-
-@dataclass(frozen=True)
-class RegisterStep:
-    module_id: str
-    count_name: str
-    relative_path: str
-    action: str
-
-
-REGISTER_STEPS = (
-    RegisterStep(
-        "model-api",
-        "models",
-        "docs/applied-ai-rig/modules/model-api/model_register.csv",
-        "Complete the minimum useful fields in",
-    ),
-    RegisterStep(
-        "data",
-        "data",
-        "docs/applied-ai-rig/modules/data/data_register.csv",
-        "Complete the minimum useful fields in",
-    ),
-    RegisterStep(
-        "agentic-runtime",
-        "actions",
-        "docs/applied-ai-rig/modules/agentic-runtime/action_register.csv",
-        "Complete the minimum useful fields in",
-    ),
-    RegisterStep(
-        "agentic-runtime",
-        "misuse_cases",
-        "docs/applied-ai-rig/modules/agentic-runtime/misuse_cases.csv",
-        "Record one representative denial path in",
-    ),
-    RegisterStep(
-        "operations",
-        "services",
-        "docs/applied-ai-rig/modules/operations/service_register.csv",
-        "Complete the minimum useful fields in",
-    ),
-)
 
 
 def _load_installation(target: Path) -> tuple[Path, Profile, Manifest]:
@@ -414,10 +413,10 @@ def _best_effort_counts(
     }
     if selected_modules is None:
         return counts
-    for count_name, (module_id, relative_path) in REGISTER_STATUS_PATHS.items():
-        if module_id in selected_modules:
-            counts[count_name] = _csv_record_count(
-                target.joinpath(*Path(relative_path).parts)
+    for descriptor in REGISTER_DESCRIPTORS:
+        if descriptor.module_id in selected_modules:
+            counts[descriptor.count_name] = _csv_record_count(
+                target.joinpath(*Path(descriptor.relative_path).parts)
             )
     return counts
 
@@ -462,9 +461,9 @@ def project_status(target: Path) -> ProjectStatus:
         "evidence": len(evidence_ids),
     }
     for entry in manifest.files:
-        name = Path(entry.path).name
-        if name in REGISTER_COUNT_NAMES:
-            counts[REGISTER_COUNT_NAMES[name]] = _csv_record_count(
+        descriptor = REGISTER_BY_FILENAME.get(Path(entry.path).name)
+        if descriptor is not None:
+            counts[descriptor.count_name] = _csv_record_count(
                 target.joinpath(*Path(entry.path).parts)
             )
 
@@ -512,9 +511,15 @@ def project_status(target: Path) -> ProjectStatus:
         )
     else:
         next_command = None
-        for step in REGISTER_STEPS:
-            if step.module_id in profile.selected_modules and counts.get(step.count_name, 0) == 0:
-                next_instruction = f"{step.action} {target / step.relative_path}."
+        for descriptor in REGISTER_DESCRIPTORS:
+            if (
+                descriptor.next_action is not None
+                and descriptor.module_id in profile.selected_modules
+                and counts.get(descriptor.count_name, 0) == 0
+            ):
+                next_instruction = (
+                    f"{descriptor.next_action} {target / descriptor.relative_path}."
+                )
                 break
         else:
             next_instruction = (
