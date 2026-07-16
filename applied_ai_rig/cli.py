@@ -18,6 +18,7 @@ from .installer import (
 )
 from .intake import MODULE_IDS, MODULE_INFO, QUESTIONS, SETUP_PROFILES, recommend_modules
 from .manifest import Manifest, Profile
+from .web_setup import WebSetupCancelled, WebSetupResult, plan_payload, run_web_setup
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -37,6 +38,8 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--list-modules", action="store_true", help="Describe available modules and exit")
     parser.add_argument("--explain", choices=MODULE_IDS, metavar="MODULE", help="Explain one module and exit")
     parser.add_argument("--non-interactive", action="store_true", help="Disable interactive prompts")
+    parser.add_argument("--terminal", action="store_true", help="Use the terminal wizard instead of the local web interface")
+    parser.add_argument("--no-browser", action="store_true", help="Start the local web interface without opening a browser")
     return parser
 
 
@@ -56,6 +59,10 @@ def main(argv: Sequence[str] | None = None) -> int:
         return 0
     if args.modules is not None and args.profile is not None:
         parser.error("--modules and --profile cannot be used together")
+    if args.terminal and args.no_browser:
+        parser.error("--terminal and --no-browser cannot be used together")
+    if args.non_interactive and (args.terminal or args.no_browser):
+        parser.error("--terminal and --no-browser are interactive options")
 
     if args.check:
         result = check_project(target)
@@ -69,6 +76,13 @@ def main(argv: Sequence[str] | None = None) -> int:
 
     if args.modules is None and args.profile is None and args.non_interactive and not profile_path.exists():
         parser.error("--non-interactive requires --modules or --profile on a new project")
+
+    checksums: dict[str, str] = {}
+    if manifest_path.exists():
+        manifest = Manifest.from_json(manifest_path.read_text(encoding="utf-8"))
+        checksums = {item.path: item.original_checksum for item in manifest.files}
+    template_root = Path(__file__).resolve().parents[1] / "templates"
+    web_result: WebSetupResult | None = None
 
     if args.modules is not None:
         selected = _parse_modules(parser, args.modules)
@@ -88,24 +102,60 @@ def main(argv: Sequence[str] | None = None) -> int:
         previous = Profile.from_json(profile_path.read_text(encoding="utf-8"))
         _print_existing_project_summary(target, previous)
         try:
-            profile = previous if args.non_interactive else run_setup_wizard(previous)
+            if args.non_interactive:
+                profile = previous
+            elif _use_web_interface(args):
+                web_result = run_web_setup(
+                    target,
+                    template_root,
+                    checksums,
+                    previous,
+                    open_browser=not args.no_browser,
+                )
+                profile = web_result.profile
+            else:
+                profile = run_setup_wizard(previous)
+        except WebSetupCancelled as error:
+            print(str(error))
+            return 2
+        except OSError as error:
+            if args.no_browser:
+                print(f"Could not start the local web interface: {error}", file=sys.stderr)
+                return 2
+            print(f"Local web interface unavailable; using terminal setup: {error}")
+            profile = run_setup_wizard(previous)
         except WizardCancelled:
             print("Setup cancelled; no files were changed.")
             return 2
     else:
         try:
+            if _use_web_interface(args):
+                web_result = run_web_setup(
+                    target,
+                    template_root,
+                    checksums,
+                    open_browser=not args.no_browser,
+                )
+                profile = web_result.profile
+            else:
+                profile = run_setup_wizard()
+        except WebSetupCancelled as error:
+            print(str(error))
+            return 2
+        except OSError as error:
+            if args.no_browser:
+                print(f"Could not start the local web interface: {error}", file=sys.stderr)
+                return 2
+            print(f"Local web interface unavailable; using terminal setup: {error}")
             profile = run_setup_wizard()
         except WizardCancelled:
             print("Setup cancelled; no files were changed.")
             return 2
 
-    checksums: dict[str, str] = {}
-    if manifest_path.exists():
-        manifest = Manifest.from_json(manifest_path.read_text(encoding="utf-8"))
-        checksums = {item.path: item.original_checksum for item in manifest.files}
-
-    template_root = Path(__file__).resolve().parents[1] / "templates"
     plan = build_plan(target, profile, template_root, checksums)
+    if web_result is not None and plan_payload(plan)["digest"] != web_result.plan_digest:
+        print("The target changed after browser confirmation; no files were changed.", file=sys.stderr)
+        return 3
     _print_plan(plan)
     if args.dry_run:
         _print_diffs(plan)
@@ -117,7 +167,7 @@ def main(argv: Sequence[str] | None = None) -> int:
         print("Conflicts require interactive approval; no files were changed.", file=sys.stderr)
         return 3
 
-    if not args.non_interactive and _has_changes(plan):
+    if web_result is None and not args.non_interactive and _has_changes(plan):
         try:
             reply = input("Apply this complete plan? [y/N] ").strip().lower()
         except (EOFError, KeyboardInterrupt):
@@ -128,15 +178,24 @@ def main(argv: Sequence[str] | None = None) -> int:
             return 2
 
     try:
+        approve: Callable[[PlannedFile], bool] = InteractiveApprover(plan.target)
+        if web_result is not None:
+            approve = WebApprover(web_result.approved_paths)
         install_plan(
             plan,
-            approve=InteractiveApprover(plan.target),
+            approve=approve,
             installed_at=datetime.now(timezone.utc).isoformat().replace("+00:00", "Z"),
         )
     except InstallationCancelled as error:
         print(str(error), file=sys.stderr)
         return 2
     return 0
+
+
+def _use_web_interface(args: argparse.Namespace) -> bool:
+    if args.terminal or args.non_interactive:
+        return False
+    return args.no_browser or (sys.stdin.isatty() and sys.stdout.isatty())
 
 
 def _parse_modules(parser: argparse.ArgumentParser, raw: str) -> tuple[str, ...]:
@@ -238,7 +297,6 @@ def _select_modules(
     while True:
         output_fn("Recommended modules (toggle any module before continuing):")
         for number, module_id in enumerate(MODULE_IDS, start=1):
-            info = MODULE_INFO[module_id]
             mark = "x" if module_id in selected else " "
             reason = profile.recommendation_reasons.get(module_id, "Not triggered by the current answers.")
             output_fn(f"  {number}. [{mark}] {module_id}: {reason}")
@@ -302,7 +360,7 @@ def _print_plan(plan: InstallationPlan) -> None:
         print(f"{item.status.name:10} {item.relative_path.as_posix()}")
     for path in plan.manual_integrations:
         print(f"MANUAL     {path}: review integration with APPLIED_AI_RIG_AGENT.md")
-        print(f"           Suggested reference: See APPLIED_AI_RIG_AGENT.md for project AI-work guidance.")
+        print("           Suggested reference: See APPLIED_AI_RIG_AGENT.md for project AI-work guidance.")
 
 
 def _has_changes(plan: InstallationPlan) -> bool:
@@ -345,3 +403,11 @@ class InteractiveApprover:
             self._remaining = False
             return False
         return reply in ("y", "yes")
+
+
+class WebApprover:
+    def __init__(self, approved_paths: frozenset[str]) -> None:
+        self.approved_paths = approved_paths
+
+    def __call__(self, item: PlannedFile) -> bool:
+        return item.relative_path.as_posix() in self.approved_paths

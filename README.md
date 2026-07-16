@@ -28,6 +28,10 @@ Optional modules are recommended from observable project risks:
 | `agentic-runtime` | Permissions, injection/exfiltration, approvals, idempotency, compensation, isolation, and misuse cases |
 | `operations` | Ownership, service levels, limits, alerts, runbooks, releases, recovery, incidents, and regressions |
 
+Module CSV files are small decision-relevant registers, not runtime event stores. They may be the system of
+record for low-volume projects or safe indexes into external canonical tools for larger projects. See the
+[register model and scaling policy](docs/registers.md).
+
 ## Quick start
 
 Applied AI Rig requires Python 3.10 or later and uses only the standard library.
@@ -37,6 +41,9 @@ git clone https://github.com/BaptisteBlouin/applied-ai-rig.git
 cd applied-ai-rig
 python init.py /path/to/your-project
 ```
+
+On systems where the launcher is named `python3` (most Linux and macOS installations), run
+`python3 init.py …` in place of `python init.py …` throughout this guide.
 
 Review the proposed modules and files before confirming. For a preview that writes nothing:
 
@@ -56,7 +63,9 @@ Use `--modules none` for a core-only installation.
 
 ## Guided setup
 
-Interactive setup offers four quick profiles plus a custom risk assessment:
+On an interactive terminal, setup opens a temporary local web interface. It is served only from
+`127.0.0.1`, works offline, uses no external assets, and stops after confirmation or cancellation. The
+interface offers four quick profiles plus a custom risk assessment:
 
 1. Minimal core.
 2. API or RAG application.
@@ -64,9 +73,26 @@ Interactive setup offers four quick profiles plus a custom risk assessment:
 4. Production AI service.
 5. Custom assessment.
 
-In the custom assessment, use `?` to explain why a question matters, `b` to return to the previous question,
-and `q` to cancel without writing. Before planning files, the module selection screen shows every
-recommendation and lets you toggle modules by number or open details with `?N`.
+Quick profiles and the custom assessment are alternative starting routes. Both lead to an explicit module
+review, followed by the real file plan and readable diffs. Contextual explanations describe when each
+choice applies, what it generates, and what it does not provide. Changed or conflicting files require
+individual approval before the plan can be confirmed.
+
+Use the terminal wizard when a browser is unavailable or undesirable:
+
+```bash
+python init.py /path/to/your-project --terminal
+```
+
+For SSH and remote environments, start the web interface without attempting to open a browser, then open
+the printed loopback URL through the environment's normal forwarding mechanism:
+
+```bash
+python init.py /path/to/your-project --no-browser
+```
+
+When standard input or output is not a TTY, the initializer keeps the deterministic terminal behavior.
+`--non-interactive`, `--modules`, checks, and automation never start a local server.
 
 Inspect the choices without starting the wizard:
 
@@ -103,6 +129,8 @@ template placeholders. It is a structural check, not a security assessment or co
 - Existing agent instructions and canonical project policies are never merged automatically.
 - Installation writes are staged and rolled back on failure.
 - The initializer performs no network request, telemetry, stack inference, or target-code execution.
+- The optional local setup server binds only to `127.0.0.1`, validates session, host, origin, payload size,
+  profile fields, modules, plan digest, and conflict approvals, and makes no external request.
 
 The generated project has no runtime dependency on Applied AI Rig.
 

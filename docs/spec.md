@@ -63,7 +63,15 @@ serving models. These examples do not restrict the supported application types.
 - MIT license.
 - English-only source, documentation, prompts, and generated content.
 
-The project has no network access, telemetry, package installation, or remote module catalog.
+The project has no external network access, telemetry, package installation, or remote module catalog. Its
+interactive setup may use a temporary loopback-only HTTP server implemented with the standard library.
+
+CSV registers are a portable storage adapter for decision-relevant records, not runtime event stores. A
+register may operate as an embedded system of record or as a safe index into an external canonical system.
+Every register defines one-row grain, ownership, stable IDs, controlled and unknown values, prohibited
+content, reconciliation, and externalization criteria. High volume, concurrent writers, advanced queries,
+row-level access, retention enforcement, or transactional updates trigger externalization rather than
+growth of versioned event logs.
 
 ## Commands
 
@@ -74,6 +82,11 @@ python init.py /path/to/project
 ```
 
 The target defaults to the current directory when omitted.
+
+When both standard input and output are interactive terminals, this command opens the local web wizard.
+The server binds to `127.0.0.1` on an ephemeral port, uses an unguessable session path, loads no remote
+resource, and stops after confirmation or cancellation. `--terminal` selects the text wizard explicitly;
+`--no-browser` starts the local server and prints its URL without opening a browser.
 
 ### Preview without writing
 
@@ -99,9 +112,15 @@ python init.py /path/to/project --profile api-rag
 ```
 
 Interactive setup provides `minimal`, `api-rag`, `agent`, and `production` starting profiles plus a custom
-assessment. Custom questions support contextual help, backward navigation, and cancellation. A final module
-screen shows all modules, recommendation reasons, generated artifacts through detail views, and explicit
-toggles before the file plan is built. Existing profiles are summarized and may be kept or reassessed.
+assessment. Quick profiles and custom assessment are alternative routes. Contextual detail views explain
+profiles, questions, modules, artifacts, and non-goals. A final module screen shows all modules,
+recommendation reasons, generated artifacts, and explicit toggles before the real file plan is built.
+Existing profiles may be retained without discarding their recorded answers.
+
+The browser receives no authority over filesystem paths. Python validates an allowlisted profile payload,
+rebuilds the plan, returns statuses and text diffs, and fingerprints the complete preview. Confirmation is
+accepted only for the current fingerprint and only when every modified or conflicting file is explicitly
+approved. Python rebuilds the plan again before invoking the existing atomic installer.
 
 `--modules` remains the exact low-level selection interface for scripts. `--profile` is mutually exclusive
 with `--modules` and can be combined with `--non-interactive`.

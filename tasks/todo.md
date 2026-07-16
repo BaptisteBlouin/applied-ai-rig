@@ -211,3 +211,26 @@ pass. Update `docs/spec.md` before implementing any requirement or stable interf
     manual review; deferred work is explicit and remains outside V1.
   - Verify: independent comparison of the report, specification, and final test output.
   - Files: `docs/verification.md`, `tasks/todo.md`.
+
+- [x] **T26: Add the offline local web setup interface**
+  - Depends on: T12, T13, and T25.
+  - Acceptance: an interactive TTY opens the A1b contextual wizard; quick and custom routes converge on
+    module review; the browser shows the real plan and diffs; all changed files require approval; terminal
+    and non-interactive workflows remain available and deterministic.
+  - Security: loopback-only ephemeral server, unguessable session path, strict Host and Origin checks,
+    nonce-based CSP, request-size limits, allowlisted payloads, stale-plan fingerprint rejection, no remote
+    assets or requests, and automatic shutdown.
+  - Verify: `python -m unittest tests.test_web_setup tests.test_cli -v`, full suite, clean-room browser API
+    walkthrough, syntax compilation, and structural check.
+  - Files: `applied_ai_rig/web_setup.py`, `applied_ai_rig/web/index.html`, `applied_ai_rig/cli.py`,
+    `tests/test_web_setup.py`, `tests/test_cli.py`, `README.md`, `docs/spec.md`, `docs/verification.md`.
+
+- [x] **T27: Define the register scaling and externalization contract**
+  - Depends on: T16 through T19.
+  - Acceptance: every modular installation receives shared register guidance defining embedded and external
+    modes, decision-relevant row grain, ownership, stable IDs, lifecycle, concurrency, sensitive content,
+    externalization triggers, and register-specific cardinality; core-only installations remain unchanged.
+  - Verify: module composition tests, all-modules clean-room installation, and structural check with zero
+    warnings.
+  - Files: `docs/registers.md`, `templates/shared/REGISTER_GUIDANCE.md.tmpl`, module READMEs,
+    `applied_ai_rig/installer.py`, `tests/test_modules.py`.

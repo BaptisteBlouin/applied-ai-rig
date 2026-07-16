@@ -5,7 +5,7 @@ import unittest
 from pathlib import Path
 from unittest.mock import Mock
 
-from applied_ai_rig.cli import InteractiveApprover, run_setup_wizard
+from applied_ai_rig.cli import InteractiveApprover, WebApprover, run_setup_wizard
 from applied_ai_rig.installer import FileStatus, PlannedFile
 
 
@@ -32,6 +32,8 @@ class CliSmokeTests(unittest.TestCase):
         self.assertIn("--list-modules", result.stdout)
         self.assertIn("--explain", result.stdout)
         self.assertIn("--profile", result.stdout)
+        self.assertIn("--terminal", result.stdout)
+        self.assertIn("--no-browser", result.stdout)
 
     def test_list_modules_explains_triggers_and_generated_artifacts(self) -> None:
         result = self.run_cli("--list-modules")
@@ -147,6 +149,16 @@ class InteractiveApprovalTests(unittest.TestCase):
         self.assertTrue(approver(first))
         self.assertTrue(approver(second))
         self.assertEqual(input_fn.call_count, 1)
+
+    def test_web_approver_accepts_only_paths_confirmed_in_the_browser(self) -> None:
+        approver = WebApprover(frozenset({"approved.md"}))
+
+        self.assertTrue(
+            approver(PlannedFile(Path("approved.md"), "new\n", FileStatus.CONFLICT))
+        )
+        self.assertFalse(
+            approver(PlannedFile(Path("other.md"), "new\n", FileStatus.CONFLICT))
+        )
 
     def test_skip_all_rejects_following_conflicts_without_prompting(self) -> None:
         input_fn = Mock(return_value="s")

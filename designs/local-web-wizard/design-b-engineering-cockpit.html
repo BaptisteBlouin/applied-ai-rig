@@ -1,0 +1,417 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="dark">
+  <title>Applied AI Rig — Engineering Cockpit</title>
+  <style>
+    :root {
+      --bg: #0b0e12;
+      --panel: #11161c;
+      --panel-2: #151b22;
+      --line: #27313c;
+      --line-strong: #3b4856;
+      --text: #e9edf2;
+      --muted: #8f9baa;
+      --dim: #657180;
+      --accent: #7ed6a5;
+      --accent-bg: #152a20;
+      --blue: #8ab4f8;
+      --amber: #e7bc73;
+      --danger: #ee8b8b;
+      --radius: 10px;
+      --mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+      --sans: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--sans);
+      font-size: 14px;
+      line-height: 1.5;
+    }
+    button { font: inherit; }
+    button:focus-visible { outline: 2px solid var(--blue); outline-offset: 3px; }
+    .shell { min-height: 100vh; display: grid; grid-template-rows: auto 1fr auto; }
+
+    .topbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 24px;
+      min-height: 64px;
+      padding: 0 28px;
+      border-bottom: 1px solid var(--line);
+      background: #0e1217;
+    }
+    .brand { display: flex; align-items: center; gap: 12px; min-width: 0; }
+    .mark {
+      width: 29px; height: 29px; border: 1px solid var(--line-strong); border-radius: 7px;
+      display: grid; place-items: center; color: var(--accent); font: 700 15px var(--mono);
+      background: var(--panel-2);
+    }
+    .brand strong { letter-spacing: .02em; }
+    .brand small { color: var(--muted); margin-left: 7px; }
+    .session { display: flex; align-items: center; gap: 18px; color: var(--muted); font: 12px var(--mono); }
+    .live { color: var(--accent); display: inline-flex; align-items: center; gap: 7px; }
+    .live::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: currentColor; }
+
+    .workspace { display: grid; grid-template-columns: 220px minmax(420px, 1fr) 320px; min-height: 0; }
+    .rail, .evidence { background: #0e1217; }
+    .rail { border-right: 1px solid var(--line); padding: 28px 20px; }
+    .rail-label, .eyebrow { color: var(--dim); text-transform: uppercase; letter-spacing: .12em; font: 11px var(--mono); }
+    .steps { list-style: none; padding: 0; margin: 20px 0 0; display: grid; gap: 5px; }
+    .step {
+      width: 100%; border: 0; background: transparent; color: var(--muted); padding: 11px 10px;
+      border-radius: 7px; text-align: left; display: grid; grid-template-columns: 24px 1fr; align-items: center;
+      cursor: pointer;
+    }
+    .step:hover { color: var(--text); background: var(--panel); }
+    .step.active { color: var(--text); background: var(--panel-2); }
+    .step-index { font: 12px var(--mono); color: var(--dim); }
+    .step.active .step-index { color: var(--accent); }
+    .step.complete .step-index { color: var(--accent); }
+    .scope {
+      margin-top: 34px; padding: 15px; border: 1px solid var(--line); border-radius: var(--radius);
+      color: var(--muted); font-size: 12px;
+    }
+    .scope strong { color: var(--text); display: block; margin-bottom: 8px; font: 11px var(--mono); }
+    .scope code { color: var(--blue); word-break: break-all; }
+
+    main { min-width: 0; padding: 46px clamp(28px, 5vw, 78px) 40px; overflow: auto; }
+    .view { display: none; max-width: 820px; margin: 0 auto; }
+    .view.active { display: block; animation: enter .2s ease-out; }
+    @keyframes enter { from { opacity: 0; transform: translateY(4px); } }
+    h1 { margin: 10px 0 8px; font-size: clamp(26px, 3vw, 38px); letter-spacing: -.035em; line-height: 1.15; }
+    .lead { color: var(--muted); max-width: 680px; font-size: 15px; margin: 0 0 32px; }
+    .section-title { margin: 30px 0 12px; color: var(--muted); font: 11px var(--mono); text-transform: uppercase; letter-spacing: .1em; }
+
+    .profile-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+    .choice {
+      position: relative; padding: 19px; border: 1px solid var(--line); border-radius: var(--radius);
+      background: var(--panel); color: var(--text); text-align: left; cursor: pointer; min-height: 126px;
+      transition: border-color .15s, background .15s, transform .15s;
+    }
+    .choice:hover { border-color: var(--line-strong); transform: translateY(-1px); }
+    .choice.selected { border-color: var(--accent); background: linear-gradient(135deg, var(--accent-bg), var(--panel) 72%); }
+    .choice.selected::after { content: "SELECTED"; position: absolute; top: 17px; right: 17px; color: var(--accent); font: 10px var(--mono); letter-spacing: .08em; }
+    .choice h3 { margin: 0 0 8px; font-size: 15px; }
+    .choice p { color: var(--muted); margin: 0; font-size: 13px; max-width: 88%; }
+    .choice .code { margin-top: 16px; color: var(--dim); font: 11px var(--mono); }
+
+    .question-card { border: 1px solid var(--line); background: var(--panel); border-radius: var(--radius); padding: 24px; margin-bottom: 12px; }
+    .question-head { display: grid; grid-template-columns: 34px 1fr auto; gap: 12px; align-items: start; }
+    .qnum { color: var(--dim); font: 12px var(--mono); padding-top: 3px; }
+    .question-card h3 { margin: 0 0 7px; font-size: 15px; font-weight: 600; }
+    .reason { color: var(--muted); font-size: 12px; }
+    .segmented { display: flex; border: 1px solid var(--line); border-radius: 7px; overflow: hidden; }
+    .segmented button { border: 0; color: var(--muted); background: #0d1116; padding: 8px 13px; cursor: pointer; }
+    .segmented button + button { border-left: 1px solid var(--line); }
+    .segmented button.on { background: var(--accent-bg); color: var(--accent); }
+
+    .module-list { display: grid; gap: 10px; }
+    .module {
+      display: grid; grid-template-columns: 42px minmax(0, 1fr) auto; gap: 15px; align-items: start;
+      padding: 17px 18px; border: 1px solid var(--line); border-radius: var(--radius); background: var(--panel);
+      cursor: pointer;
+    }
+    .module:hover { border-color: var(--line-strong); }
+    .module.on { border-color: #41614f; }
+    .toggle { width: 38px; height: 22px; border-radius: 20px; background: #222b34; position: relative; margin-top: 1px; }
+    .toggle::after { content: ""; position: absolute; width: 16px; height: 16px; top: 3px; left: 3px; border-radius: 50%; background: var(--muted); transition: transform .15s; }
+    .module.on .toggle { background: #28523b; }
+    .module.on .toggle::after { transform: translateX(16px); background: var(--accent); }
+    .module h3 { margin: 0 0 5px; font-size: 14px; }
+    .module p { margin: 0; color: var(--muted); font-size: 12px; }
+    .tag { padding: 4px 7px; border: 1px solid var(--line); border-radius: 5px; color: var(--dim); font: 10px var(--mono); white-space: nowrap; }
+    .module.recommended .tag { color: var(--accent); border-color: #355a45; background: var(--accent-bg); }
+
+    .metrics { display: grid; grid-template-columns: repeat(4, 1fr); border: 1px solid var(--line); border-radius: var(--radius); overflow: hidden; margin-bottom: 18px; }
+    .metric { padding: 15px 17px; background: var(--panel); }
+    .metric + .metric { border-left: 1px solid var(--line); }
+    .metric strong { display: block; font: 21px var(--mono); }
+    .metric span { color: var(--muted); font-size: 11px; }
+    .plan { border: 1px solid var(--line); border-radius: var(--radius); overflow: hidden; background: var(--panel); }
+    .plan-head, .file { display: grid; grid-template-columns: 90px 1fr 80px; gap: 12px; align-items: center; }
+    .plan-head { padding: 10px 16px; background: #0d1116; border-bottom: 1px solid var(--line); color: var(--dim); font: 10px var(--mono); text-transform: uppercase; }
+    .file { padding: 10px 16px; border-bottom: 1px solid #202830; font: 12px var(--mono); }
+    .file:last-child { border-bottom: 0; }
+    .status-create { color: var(--accent); }
+    .status-update { color: var(--blue); }
+    .source { color: var(--dim); text-align: right; }
+    .callout { margin-top: 16px; padding: 15px 17px; border: 1px solid #5d4b2f; background: #221c13; color: #d7bd8f; border-radius: var(--radius); font-size: 12px; }
+
+    .evidence { border-left: 1px solid var(--line); padding: 28px 22px; overflow: auto; }
+    .evidence h2 { margin: 5px 0 20px; font-size: 14px; }
+    .signal { padding: 13px 0; border-top: 1px solid var(--line); }
+    .signal:first-of-type { border-top: 0; }
+    .signal-label { color: var(--dim); font: 10px var(--mono); text-transform: uppercase; letter-spacing: .08em; }
+    .signal-value { margin-top: 5px; color: var(--text); font-size: 12px; }
+    .signal-value.good { color: var(--accent); }
+    .mini-modules { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+    .mini { color: var(--dim); border: 1px solid var(--line); padding: 4px 6px; border-radius: 4px; font: 10px var(--mono); }
+    .mini.on { color: var(--accent); border-color: #355a45; }
+    .proof { margin-top: 24px; border: 1px solid var(--line); border-radius: 8px; padding: 13px; background: var(--panel); }
+    .proof div { display: flex; justify-content: space-between; gap: 12px; padding: 5px 0; font: 10px var(--mono); color: var(--muted); }
+    .proof b { color: var(--accent); font-weight: 500; }
+
+    .footer { min-height: 70px; padding: 12px 28px; border-top: 1px solid var(--line); background: #0e1217; display: flex; align-items: center; justify-content: space-between; gap: 20px; }
+    .keys { color: var(--dim); font: 11px var(--mono); }
+    kbd { border: 1px solid var(--line-strong); border-bottom-width: 2px; padding: 2px 5px; border-radius: 4px; color: var(--muted); background: var(--panel); font: inherit; }
+    .actions { display: flex; gap: 9px; }
+    .btn { border: 1px solid var(--line-strong); border-radius: 7px; padding: 9px 16px; background: var(--panel); color: var(--text); cursor: pointer; }
+    .btn:hover { background: var(--panel-2); }
+    .btn.primary { color: #07130d; background: var(--accent); border-color: var(--accent); font-weight: 650; }
+    .btn.primary:hover { background: #92e3b5; }
+    .btn:disabled { opacity: .35; cursor: not-allowed; }
+
+    .toast { position: fixed; right: 22px; bottom: 86px; padding: 11px 15px; background: #1b252d; border: 1px solid var(--line-strong); border-radius: 7px; opacity: 0; transform: translateY(6px); pointer-events: none; }
+    .toast.show { opacity: 1; transform: none; }
+
+    @media (max-width: 1040px) {
+      .workspace { grid-template-columns: 190px minmax(0, 1fr); }
+      .evidence { display: none; }
+    }
+    @media (max-width: 720px) {
+      .topbar { padding: 0 16px; }
+      .brand small, .session span:not(.live) { display: none; }
+      .workspace { display: block; }
+      .rail { border-right: 0; border-bottom: 1px solid var(--line); padding: 10px 14px; overflow-x: auto; }
+      .rail-label, .scope { display: none; }
+      .steps { margin: 0; display: flex; min-width: 510px; }
+      .step { grid-template-columns: 19px 1fr; padding: 8px; }
+      main { padding: 30px 16px 110px; overflow: visible; }
+      .profile-grid { grid-template-columns: 1fr; }
+      .question-head { grid-template-columns: 28px 1fr; }
+      .segmented { grid-column: 2; width: max-content; }
+      .module { grid-template-columns: 42px minmax(0, 1fr); }
+      .tag { grid-column: 2; width: max-content; }
+      .metrics { grid-template-columns: repeat(2, 1fr); }
+      .metric:nth-child(3) { border-left: 0; border-top: 1px solid var(--line); }
+      .metric:nth-child(4) { border-top: 1px solid var(--line); }
+      .file, .plan-head { grid-template-columns: 68px 1fr; }
+      .source { display: none; }
+      .footer { position: fixed; z-index: 5; left: 0; right: 0; bottom: 0; padding: 12px 16px; }
+      .keys { display: none; }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after { animation-duration: .001ms !important; transition-duration: .001ms !important; }
+    }
+  </style>
+</head>
+<body>
+<div class="shell">
+  <header class="topbar">
+    <div class="brand"><span class="mark">A</span><strong>Applied AI Rig</strong><small>Engineering setup</small></div>
+    <div class="session"><span class="live">LOCAL SESSION</span><span>NO NETWORK · NO WRITES YET</span></div>
+  </header>
+
+  <div class="workspace">
+    <aside class="rail" aria-label="Setup progress">
+      <div class="rail-label">Setup sequence</div>
+      <ol class="steps">
+        <li><button class="step active" data-step="0"><span class="step-index">01</span><span>Starting profile</span></button></li>
+        <li><button class="step" data-step="1"><span class="step-index">02</span><span>Risk assessment</span></button></li>
+        <li><button class="step" data-step="2"><span class="step-index">03</span><span>Module scope</span></button></li>
+        <li><button class="step" data-step="3"><span class="step-index">04</span><span>Review plan</span></button></li>
+      </ol>
+      <div class="scope"><strong>TARGET</strong><code>~/work/customer-assistant</code><br><br>New installation<br>Rig v0.1.0</div>
+    </aside>
+
+    <main id="main">
+      <section class="view active" data-view="0">
+        <div class="eyebrow">01 / Starting point</div>
+        <h1>Choose an engineering baseline.</h1>
+        <p class="lead">Profiles only select a starting module set. They do not make factual claims about your project, and every choice remains editable.</p>
+        <div class="profile-grid" role="radiogroup" aria-label="Starting profile">
+          <button class="choice" data-profile="minimal" role="radio" aria-checked="false"><h3>Minimal core</h3><p>Decisions, evidence, worklog and delivery discipline. No optional modules.</p><div class="code">0 optional modules</div></button>
+          <button class="choice selected" data-profile="api-rag" role="radio" aria-checked="true"><h3>API or RAG</h3><p>Model/API boundaries, governed data and evaluation records.</p><div class="code">model-api · data · evaluation</div></button>
+          <button class="choice" data-profile="agent" role="radio" aria-checked="false"><h3>Agent with tools</h3><p>Add permission boundaries, approvals, audit and misuse analysis.</p><div class="code">4 optional modules</div></button>
+          <button class="choice" data-profile="production" role="radio" aria-checked="false"><h3>Production service</h3><p>Add operational ownership, limits, recovery and incident records.</p><div class="code">4 optional modules</div></button>
+        </div>
+        <div class="section-title">Or establish recommendations from evidence</div>
+        <button class="choice" data-profile="custom" style="width:100%; min-height:90px" role="radio" aria-checked="false"><h3>Run custom risk assessment</h3><p>Answer six observable project questions. Recommendations will show their reason.</p></button>
+      </section>
+
+      <section class="view" data-view="1">
+        <div class="eyebrow">02 / Observable risks</div>
+        <h1>Record what the system will do.</h1>
+        <p class="lead">These answers produce explainable recommendations. Unknowns should remain unknown; you can revise this profile later.</p>
+        <div id="questions"></div>
+      </section>
+
+      <section class="view" data-view="2">
+        <div class="eyebrow">03 / Module boundary</div>
+        <h1>Set the durable record.</h1>
+        <p class="lead">Keep only modules that represent real project risk. Core engineering records are always installed.</p>
+        <div class="module-list" id="modules"></div>
+      </section>
+
+      <section class="view" data-view="3">
+        <div class="eyebrow">04 / Atomic installation plan</div>
+        <h1>Review before anything changes.</h1>
+        <p class="lead">The initializer will stage the complete plan, validate it, and roll back on failure. Existing files are never overwritten silently.</p>
+        <div class="metrics">
+          <div class="metric"><strong id="artifact-count">16</strong><span>artifacts planned</span></div>
+          <div class="metric"><strong id="module-count">3</strong><span>optional modules</span></div>
+          <div class="metric"><strong>0</strong><span>conflicts detected</span></div>
+          <div class="metric"><strong>0</strong><span>network requests</span></div>
+        </div>
+        <div class="plan">
+          <div class="plan-head"><span>Status</span><span>Path</span><span class="source">Source</span></div>
+          <div id="files"></div>
+        </div>
+        <div class="callout"><strong>Confirmation boundary.</strong> This prototype simulates the final action. The production flow must revalidate all browser input in Python before staging or writing files.</div>
+      </section>
+    </main>
+
+    <aside class="evidence" aria-label="Decision evidence">
+      <div class="eyebrow">Live configuration</div>
+      <h2>Decision evidence</h2>
+      <div class="signal"><div class="signal-label">Profile source</div><div class="signal-value" id="side-profile">API or RAG preset</div></div>
+      <div class="signal"><div class="signal-label">Assessment</div><div class="signal-value" id="side-answers">0 of 6 answers recorded</div></div>
+      <div class="signal"><div class="signal-label">Selected scope</div><div class="mini-modules" id="mini-modules"></div></div>
+      <div class="signal"><div class="signal-label">Write boundary</div><div class="signal-value good">Pending explicit approval</div></div>
+      <div class="signal"><div class="signal-label">Data handling</div><div class="signal-value">Browser state remains local. No prompts, responses, secrets or project payloads.</div></div>
+      <div class="proof">
+        <div><span>bind</span><b>127.0.0.1</b></div>
+        <div><span>transport</span><b>session token</b></div>
+        <div><span>dependencies</span><b>stdlib only</b></div>
+        <div><span>install mode</span><b>atomic</b></div>
+      </div>
+    </aside>
+  </div>
+
+  <footer class="footer">
+    <div class="keys"><kbd>←</kbd> <kbd>→</kbd> navigate &nbsp; <kbd>Enter</kbd> continue</div>
+    <div class="actions"><button class="btn" id="back" disabled>Back</button><button class="btn primary" id="next">Continue</button></div>
+  </footer>
+</div>
+<div class="toast" role="status" aria-live="polite" id="toast">Plan approved in prototype — no files were written.</div>
+
+<script>
+  const profiles = {
+    minimal: [],
+    'api-rag': ['model-api', 'data', 'evaluation'],
+    agent: ['model-api', 'data', 'evaluation', 'agentic-runtime'],
+    production: ['model-api', 'data', 'evaluation', 'operations'],
+    custom: []
+  };
+  const profileNames = { minimal: 'Minimal core preset', 'api-rag': 'API or RAG preset', agent: 'Agent preset', production: 'Production preset', custom: 'Custom assessment' };
+  const moduleData = [
+    ['model-api', 'Model API', 'Model inventory, credential boundaries, limits, retries, validation, usage and cost.', 3],
+    ['data', 'Data', 'Provenance, access, destinations, derivatives, retention and deletion evidence.', 2],
+    ['evaluation', 'Evaluation', 'Held-out data, thresholds, uncertainty, judges, experiments and error analysis.', 3],
+    ['agentic-runtime', 'Agentic runtime', 'Permissions, approvals, injection, compensation, audit and misuse cases.', 3],
+    ['operations', 'Operations', 'Ownership, service levels, runbooks, rollback, incidents and regressions.', 3]
+  ];
+  const questions = [
+    ['Will this project call an external model or embedding API?', 'Track credential boundaries, model usage, and attributable cost.', 'model-api'],
+    ['Will it process supplied, personal, confidential, or third-party data?', 'Record provenance, allowed destinations, derivatives, and retention.', 'data'],
+    ['Will prompts, model outputs, embeddings, or derived content be persisted?', 'Treat persisted and derived content according to its source sensitivity.', 'data'],
+    ['Will variants be compared or quality claims be shared with stakeholders?', 'Link claims to reproducible runs, metrics, and known limitations.', 'evaluation'],
+    ['Can the application call tools or take actions with side effects?', 'Record permission boundaries, approvals, and bounded consumption.', 'agentic-runtime'],
+    ['Will the application run in production or serve users?', 'Define ownership, operating limits, releases, rollback, and incidents.', 'operations']
+  ];
+  const coreFiles = ['APPLIED_AI_RIG_AGENT.md', 'docs/applied-ai-rig/README.md', 'OPERATING_PRINCIPLES.md', 'DECISIONS.md', 'EVIDENCE.md', 'WORKLOG.md', 'DELIVERY_CHECKLIST.md', '.applied-ai-rig/profile.json', '.applied-ai-rig/manifest.json'];
+
+  let step = 0;
+  let selectedProfile = 'api-rag';
+  let selectedModules = new Set(profiles[selectedProfile]);
+  let answers = Array(6).fill(null);
+
+  const questionsEl = document.querySelector('#questions');
+  questions.forEach((q, i) => {
+    questionsEl.insertAdjacentHTML('beforeend', `<article class="question-card"><div class="question-head"><span class="qnum">${String(i + 1).padStart(2, '0')}</span><div><h3>${q[0]}</h3><div class="reason">${q[1]}</div></div><div class="segmented" role="group" aria-label="Answer question ${i + 1}"><button data-q="${i}" data-answer="true" aria-pressed="false">Yes</button><button data-q="${i}" data-answer="false" aria-pressed="false">No</button></div></div></article>`);
+  });
+  questionsEl.addEventListener('click', (event) => {
+    const button = event.target.closest('[data-q]');
+    if (!button) return;
+    const index = Number(button.dataset.q);
+    answers[index] = button.dataset.answer === 'true';
+    button.parentElement.querySelectorAll('button').forEach(b => { const on = b === button; b.classList.toggle('on', on); b.setAttribute('aria-pressed', on); });
+    if (selectedProfile === 'custom') recomputeRecommendations();
+    updateSidebar();
+  });
+
+  function renderModules() {
+    const recommended = recommendedSet();
+    document.querySelector('#modules').innerHTML = moduleData.map(([id, title, desc]) => `<button class="module ${selectedModules.has(id) ? 'on' : ''} ${recommended.has(id) ? 'recommended' : ''}" data-module="${id}" aria-pressed="${selectedModules.has(id)}"><span class="toggle" aria-hidden="true"></span><span><h3>${title}</h3><p>${desc}</p></span><span class="tag">${recommended.has(id) ? 'RECOMMENDED' : 'OPTIONAL'}</span></button>`).join('');
+  }
+  document.querySelector('#modules').addEventListener('click', (event) => {
+    const row = event.target.closest('[data-module]');
+    if (!row) return;
+    const id = row.dataset.module;
+    selectedModules.has(id) ? selectedModules.delete(id) : selectedModules.add(id);
+    renderModules(); updateSidebar(); renderPlan();
+  });
+
+  function recommendedSet() {
+    if (selectedProfile !== 'custom') return new Set(profiles[selectedProfile]);
+    return new Set(questions.filter((_, i) => answers[i] === true).map(q => q[2]));
+  }
+  function recomputeRecommendations() { selectedModules = recommendedSet(); renderModules(); }
+
+  document.querySelectorAll('[data-profile]').forEach(card => card.addEventListener('click', () => {
+    selectedProfile = card.dataset.profile;
+    selectedModules = new Set(profiles[selectedProfile]);
+    document.querySelectorAll('[data-profile]').forEach(c => { const on = c === card; c.classList.toggle('selected', on); c.setAttribute('aria-checked', on); });
+    renderModules(); updateSidebar(); renderPlan();
+  }));
+
+  function updateSidebar() {
+    document.querySelector('#side-profile').textContent = profileNames[selectedProfile];
+    const count = answers.filter(value => value !== null).length;
+    document.querySelector('#side-answers').textContent = `${count} of 6 answers recorded`;
+    document.querySelector('#mini-modules').innerHTML = moduleData.map(([id]) => `<span class="mini ${selectedModules.has(id) ? 'on' : ''}">${id}</span>`).join('');
+  }
+
+  function renderPlan() {
+    const selected = moduleData.filter(([id]) => selectedModules.has(id));
+    const files = [...coreFiles];
+    selected.forEach(([id, , , count]) => {
+      files.push(`docs/applied-ai-rig/modules/${id}/README.md`);
+      if (id === 'model-api') files.push('docs/applied-ai-rig/modules/model-api/model_register.csv', 'docs/applied-ai-rig/modules/model-api/api_usage.csv');
+      if (id === 'data') files.push('docs/applied-ai-rig/modules/data/data_register.csv');
+      if (id === 'evaluation') files.push('docs/applied-ai-rig/modules/evaluation/EVALUATION_PLAN.md', 'docs/applied-ai-rig/modules/evaluation/experiments.csv');
+      if (id === 'agentic-runtime') files.push('docs/applied-ai-rig/modules/agentic-runtime/action_register.csv', 'docs/applied-ai-rig/modules/agentic-runtime/misuse_cases.csv');
+      if (id === 'operations') files.push('docs/applied-ai-rig/modules/operations/service_register.csv', 'docs/applied-ai-rig/modules/operations/incident_register.csv');
+    });
+    document.querySelector('#artifact-count').textContent = files.length;
+    document.querySelector('#module-count').textContent = selected.length;
+    document.querySelector('#files').innerHTML = files.map((file, index) => `<div class="file"><span class="status-create">CREATE</span><span>${file}</span><span class="source">${index < coreFiles.length ? 'core' : 'module'}</span></div>`).join('');
+  }
+
+  function showStep(nextStep) {
+    step = Math.max(0, Math.min(3, nextStep));
+    document.querySelectorAll('.view').forEach((view, i) => view.classList.toggle('active', i === step));
+    document.querySelectorAll('.step').forEach((item, i) => { item.classList.toggle('active', i === step); item.classList.toggle('complete', i < step); });
+    document.querySelector('#back').disabled = step === 0;
+    document.querySelector('#next').textContent = step === 3 ? 'Approve plan' : 'Continue';
+    document.querySelector('#main').scrollTop = 0;
+    if (step === 2) renderModules();
+    if (step === 3) renderPlan();
+  }
+  document.querySelector('#next').addEventListener('click', () => {
+    if (step < 3) showStep(step + 1);
+    else {
+      const toast = document.querySelector('#toast'); toast.classList.add('show');
+      setTimeout(() => toast.classList.remove('show'), 3200);
+    }
+  });
+  document.querySelector('#back').addEventListener('click', () => showStep(step - 1));
+  document.querySelectorAll('.step').forEach(item => item.addEventListener('click', () => showStep(Number(item.dataset.step))));
+  document.addEventListener('keydown', event => {
+    if (event.key === 'ArrowRight' && !event.target.matches('button')) showStep(step + 1);
+    if (event.key === 'ArrowLeft' && !event.target.matches('button')) showStep(step - 1);
+  });
+
+  renderModules(); updateSidebar(); renderPlan();
+</script>
+</body>
+</html>

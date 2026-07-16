@@ -295,5 +295,30 @@ updating the specification.
 6. **Check gate:** precise read-only structural validation.
 7. **Usability gate:** clean-room installation in under five minutes.
 8. **Release gate:** every V1 success criterion mapped to test or review evidence.
+9. **Local web gate:** browser and terminal routes produce the same validated profiles and plans; localhost
+   security controls, stale-plan rejection, conflict approval, fallback behavior, and clean-room
+   installation all pass without external resources.
 
 Implementation does not advance past a gate while its acceptance checks fail.
+
+## Phase 9: local web setup
+
+### Outcome
+
+Interactive users receive a calm, contextual local web wizard while the existing deterministic terminal
+and non-interactive contracts remain available.
+
+### Work
+
+- Serve the self-contained A1b interface from an ephemeral loopback-only standard-library server.
+- Keep quick profiles and custom assessment as alternative routes that converge on module review.
+- Render the actual installation plan and text diffs from the existing planner.
+- Require explicit approval for every modified or conflicting file and reject stale confirmations.
+- Rebuild the confirmed plan before passing browser approvals to the atomic installer.
+- Preserve terminal, no-browser, redirected-output, and non-interactive workflows.
+- Verify HTTP boundaries, browser assets, CLI compatibility, clean-room installation, and structural checks.
+
+### Checkpoint
+
+The local server makes no external request, shuts down after confirmation or cancellation, and cannot
+select a target path, module ID, profile field, or replacement outside Python's allowlisted plan.

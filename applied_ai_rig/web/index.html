@@ -1,0 +1,161 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light">
+  <title>Applied AI Rig setup</title>
+  <style nonce="__CSP_NONCE__">
+    :root {
+      --ivory:#f4f1e8; --paper:#fbfaf5; --charcoal:#22231f; --muted:#696a63;
+      --line:#d8d5cb; --green:#285d46; --wash:#e5ede7; --danger:#8a4039;
+      --serif:Iowan Old Style,Baskerville,"Times New Roman",serif;
+      --sans:ui-sans-serif,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+    }
+    * { box-sizing:border-box; }
+    html { scroll-behavior:smooth; }
+    body { margin:0; min-height:100vh; color:var(--charcoal); background:var(--ivory); font:15px/1.55 var(--sans); }
+    button,input { color:inherit; font:inherit; }
+    button:focus-visible,input:focus-visible,summary:focus-visible { outline:2px solid var(--green); outline-offset:3px; }
+    [hidden] { display:none!important; }
+    .shell { width:min(1180px,calc(100% - 48px)); margin:auto; padding:42px 0 64px; }
+    .masthead { display:flex; justify-content:space-between; gap:24px; padding-bottom:24px; border-bottom:1px solid var(--line); }
+    .brand { font-weight:700; letter-spacing:-.02em; }
+    .brand span { color:var(--green); }
+    .status { color:var(--muted); font-size:12px; }
+    .workspace { display:grid; grid-template-columns:150px minmax(0,1fr); gap:clamp(36px,5vw,68px); padding-top:52px; }
+    .rail { display:flex; flex-direction:column; }
+    .eyebrow,.kicker,.detail-label,.review-label { margin:0; color:var(--muted); font-size:10px; font-weight:750; letter-spacing:.14em; text-transform:uppercase; }
+    .steps { display:grid; gap:17px; margin:28px 0 0; padding:0; list-style:none; }
+    .step { display:grid; grid-template-columns:20px 1fr; gap:10px; color:#96958d; font-size:12px; }
+    .step-index { font:15px var(--serif); }
+    .step.active { color:var(--charcoal); }
+    .step.active .step-index,.step.done .step-index { color:var(--green); }
+    .rail-note { margin:auto 0 0; padding-top:60px; color:var(--muted); font:14px/1.5 var(--serif); }
+    .stage { display:grid; grid-template-columns:minmax(0,1fr) minmax(250px,320px); gap:clamp(32px,4vw,56px); align-items:start; min-width:0; }
+    .content { display:flex; flex-direction:column; min-width:0; min-height:680px; }
+    .page { animation:appear .25s ease both; }
+    .page-head { max-width:650px; margin-bottom:36px; }
+    .kicker { margin-bottom:17px; color:var(--green); }
+    h1 { max-width:650px; margin:0 0 17px; font:400 clamp(38px,5vw,56px)/1.02 var(--serif); letter-spacing:-.035em; }
+    .lede { max-width:610px; margin:0; color:var(--muted); }
+    .item-list { border-top:1px solid var(--line); }
+    .item { position:relative; display:grid; grid-template-columns:minmax(145px,.7fr) 1fr auto; gap:20px; align-items:start; width:100%; padding:19px 2px 19px 0; text-align:left; background:transparent; border:0; border-bottom:1px solid var(--line); cursor:pointer; }
+    .item:hover .item-title,.item.inspected .item-title { color:var(--green); }
+    .item[aria-pressed="true"] .mark { color:var(--paper); border-color:var(--green); background:var(--green); }
+    .item-title { font:400 18px/1.25 var(--serif); }
+    .item-copy { color:var(--muted); font-size:11px; line-height:1.5; }
+    .item > span > .item-title,.item > span > .item-copy { display:block; }
+    .item > span > .item-title { margin-bottom:6px; }
+    .mark { display:grid; place-items:center; width:17px; height:17px; color:transparent; border:1px solid #aaa89f; font-size:10px; }
+    .tag { color:var(--green); font-size:9px; font-weight:750; letter-spacing:.1em; text-transform:uppercase; }
+    .assessment .item { grid-template-columns:1fr auto; }
+    .binary { display:flex; gap:2px; }
+    .binary button { min-width:42px; padding:5px 8px; color:var(--muted); background:transparent; border:0; border-bottom:1px solid transparent; cursor:pointer; font-size:11px; font-weight:700; }
+    .binary button.on { color:var(--green); border-color:var(--green); }
+    #modules .item { grid-template-columns:20px minmax(0,1fr) auto; }
+    .inspector-slot { position:sticky; top:28px; }
+    .inspector { padding:22px 0 0; border-top:2px solid var(--green); animation:appear .18s ease both; }
+    .inspector-context { margin:0 0 7px; color:var(--green); font-size:10px; font-weight:750; letter-spacing:.12em; text-transform:uppercase; }
+    .inspector h2 { margin:0 0 11px; font:400 27px/1.1 var(--serif); }
+    .inspector-intro { margin:0 0 24px; color:var(--muted); font:15px/1.5 var(--serif); }
+    .detail { padding:13px 0; border-top:1px solid var(--line); }
+    .detail-label { margin-bottom:5px; }
+    .detail p,.detail ul { margin:0; color:var(--muted); font-size:12px; }
+    .detail ul { padding-left:17px; }
+    .hint { margin:22px 0 0; color:var(--muted); font-size:10px; }
+    .review-card { padding:20px 0; border-top:1px solid var(--line); }
+    .review-value { margin:5px 0 0; font:400 21px/1.25 var(--serif); }
+    .pills,.counts { display:flex; flex-wrap:wrap; gap:7px 17px; }
+    .pill,.count { color:var(--green); font-size:12px; font-weight:650; }
+    .plan { width:100%; border-collapse:collapse; font-size:11px; }
+    .plan th,.plan td { padding:9px 0; border-bottom:1px solid #e4e1d8; text-align:left; vertical-align:top; }
+    .plan th { color:var(--muted); }
+    .plan-row { cursor:pointer; }
+    .plan-row:hover,.plan-row.inspected { color:var(--green); }
+    .plan td:first-child { width:120px; color:var(--green); font-weight:750; }
+    .approval { display:flex; align-items:flex-start; gap:8px; margin-top:8px; color:var(--danger); font-size:11px; }
+    .approval input { margin-top:3px; }
+    details.diff { margin-top:10px; }
+    details.diff summary { color:var(--green); cursor:pointer; font-size:11px; }
+    pre { max-height:320px; overflow:auto; margin:8px 0 0; padding:12px; color:#dfe8e1; background:#26332d; font:11px/1.45 ui-monospace,SFMono-Regular,Consolas,monospace; white-space:pre-wrap; }
+    .notice { margin-top:18px; padding:14px 16px; color:var(--muted); background:var(--wash); font-size:12px; }
+    .error { color:var(--danger); background:#f1e5e2; }
+    .actions { display:flex; justify-content:space-between; align-items:center; gap:20px; margin-top:auto; padding-top:44px; }
+    .actions-right { display:flex; gap:18px; }
+    .btn { padding:9px 0; border:0; border-bottom:1px solid var(--line); background:transparent; cursor:pointer; font-size:12px; font-weight:700; }
+    .btn.primary { min-width:112px; padding-inline:16px; color:var(--paper); border:1px solid var(--green); background:var(--green); }
+    .btn:disabled { opacity:.35; cursor:not-allowed; }
+    .keyboard { color:var(--muted); font-size:10px; }
+    .complete { padding:38px 0; border-top:2px solid var(--green); }
+    .complete h2 { margin:0 0 12px; font:400 34px/1.1 var(--serif); }
+    @keyframes appear { from { opacity:0; transform:translateY(5px); } }
+    @media(max-width:860px){.shell{width:min(100% - 32px,700px);padding-top:26px}.workspace{display:block;padding-top:32px}.rail{margin-bottom:34px}.steps{grid-template-columns:repeat(4,1fr);gap:7px;margin-top:18px}.step{display:block;border-top:1px solid var(--line);padding-top:7px;font-size:0}.step.active,.step.done{border-color:var(--green)}.rail-note{display:none}.stage{display:block}.inspector-slot{position:static}.inspector{margin:14px 0 24px;padding:17px 16px 4px;background:var(--paper);border-top:2px solid var(--green)}.inspector .detail{padding:11px 0}.content{min-height:650px}}
+    @media(max-width:520px){.shell{width:100%;padding:20px 18px 36px}.status,.keyboard{display:none}.item{display:grid;grid-template-columns:1fr auto}.item-copy{grid-column:1/-1}.assessment .item{grid-template-columns:1fr}.binary{margin-top:8px}#modules .item{grid-template-columns:20px minmax(0,1fr)}#modules .tag{grid-column:2}.inspector h2{font-size:23px}.plan td:first-child{width:88px}}
+    @media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}*,*::before,*::after{animation-duration:.01ms!important;transition-duration:.01ms!important}}
+  </style>
+</head>
+<body>
+  <div class="shell">
+    <header class="masthead"><div class="brand"><span>Applied</span> AI Rig</div><div class="status" id="target">Local session · Nothing written yet</div></header>
+    <main class="workspace">
+      <aside class="rail" aria-label="Setup progress">
+        <p class="eyebrow">Guided setup</p>
+        <ol class="steps">
+          <li class="step active" data-step="0"><span class="step-index">01</span><span>Starting point</span></li>
+          <li class="step" data-step="1"><span class="step-index">02</span><span>Custom assessment</span></li>
+          <li class="step" data-step="2"><span class="step-index">02</span><span>Review modules</span></li>
+          <li class="step" data-step="3"><span class="step-index">03</span><span>Review plan</span></li>
+        </ol>
+        <p class="rail-note">Focus any item to understand why it exists and what it will create.</p>
+      </aside>
+      <div class="stage">
+        <section class="content" aria-live="polite">
+          <div class="page" data-page="0"><div class="page-head"><p class="kicker" data-kicker>Step 1 of 3 · Starting point</p><h1>Begin with the shape you know.</h1><p class="lede">Choose a quick profile, or run a custom assessment. These are alternative starting points; no source code is scanned and no project fact is inferred.</p></div><div class="item-list" id="profiles"></div></div>
+          <div class="page" data-page="1" hidden><div class="page-head"><p class="kicker" data-kicker>Step 2 of 4 · Custom assessment</p><h1>Record only what you know.</h1><p class="lede">Answering Yes recommends a relevant module. It does not fill its records with assumed details.</p></div><div class="item-list assessment" id="assessment"></div></div>
+          <div class="page" data-page="2" hidden><div class="page-head"><p class="kicker" data-kicker>Step 2 of 3 · Review modules</p><h1>Keep what earns its place.</h1><p class="lede">Review, add, or decline the suggested governance surfaces. The core is always included.</p></div><div class="item-list" id="modules"></div></div>
+          <div class="page" data-page="3" hidden><div class="page-head"><p class="kicker" data-kicker>Step 3 of 3 · Review plan</p><h1>A deliberate final look.</h1><p class="lede">This is the real plan for the target project. Every changed or conflicting file requires explicit approval.</p></div><section class="review-card"><p class="review-label">Starting route</p><p class="review-value" id="review-profile"></p></section><section class="review-card"><p class="review-label">Optional modules</p><div class="pills" id="review-modules"></div></section><section class="review-card"><p class="review-label">File plan</p><div class="counts" id="counts"></div><table class="plan"><thead><tr><th>Status</th><th>Path and review</th></tr></thead><tbody id="plan"></tbody></table><div class="notice" id="plan-notice">Preparing the plan…</div></section></div>
+          <div class="page complete" data-page="4" hidden><p class="kicker">Confirmed</p><h2>The installation plan is approved.</h2><p class="lede">Return to the terminal. Applied AI Rig will rebuild the plan once more and apply it atomically.</p></div>
+          <footer class="actions" id="actions"><span class="keyboard">Focus or hover an item for details</span><div class="actions-right"><button class="btn" id="cancel">Cancel</button><button class="btn" id="back" disabled>Back</button><button class="btn primary" id="next">Continue</button></div></footer>
+        </section>
+        <aside class="inspector-slot" id="inspector-slot" aria-label="Contextual explanation"><div class="inspector" id="inspector" aria-live="polite"></div></aside>
+      </div>
+    </main>
+  </div>
+  <script nonce="__CSP_NONCE__">
+    const moduleOrder=["model-api","data","evaluation","agentic-runtime","operations"];
+    const profileDetails={
+      minimal:{label:"Minimal core",purpose:"Keep a lightweight, durable engineering record before specialized AI governance is useful.",when:"Early exploration, prototypes, or projects whose AI shape is not yet known.",covers:["Decisions and evidence","Implementation worklog","Delivery checks"],artifacts:["Core records only","Profile and checksum manifest"],non:"It does not mean the project is low risk, and it disables no later module."},
+      "api-rag":{label:"API or RAG",purpose:"Start with the concerns shared by model APIs, retrieval, and grounded generation.",when:"The application calls models, retrieves documents, or makes quality claims.",covers:["Provider and model boundaries","Data provenance and retention","Reproducible evaluation"],artifacts:["Model, data, and evaluation records"],non:"It does not inspect your code or claim that data is safe."},
+      agent:{label:"Agent with tools",purpose:"Add explicit control records for software that can choose and execute actions.",when:"A model invokes tools, changes external state, or operates with delegated authority.",covers:["Permissions and approvals","Side effects and compensation","Misuse and audit boundaries"],artifacts:["Agentic runtime, model, data, and evaluation records"],non:"It is not a runtime sandbox, policy engine, or authorization system."},
+      production:{label:"Production service",purpose:"Add operational accountability to an AI-backed service used beyond development.",when:"Users or dependent systems rely on availability, recovery, and predictable behavior.",covers:["Ownership and service limits","Rollback and incident response","Behavioral regressions"],artifacts:["Operations, model, data, and evaluation records"],non:"It does not deploy, monitor, or operate the service for you."},
+      custom:{label:"Custom assessment",purpose:"Answer six observable questions and derive transparent module recommendations.",when:"No quick profile fits, or you want recommendations grounded in explicit project conditions.",covers:["Models and data","Evaluation and side effects","Production use"],artifacts:["Recommendations and recorded Yes or No answers"],non:"It does not scan source code, infer facts, or write files during the assessment."}
+    };
+    const state={page:0,route:"api-rag",answers:{},selected:new Set(),plan:null,target:null};
+    const inspector=document.querySelector("#inspector"),slot=document.querySelector("#inspector-slot");
+    function escText(value){return String(value)}
+    function element(tag,className,text){const node=document.createElement(tag);if(className)node.className=className;if(text!==undefined)node.textContent=escText(text);return node}
+    function inspect(data,context,target){document.querySelectorAll(".inspected").forEach(node=>node.classList.remove("inspected"));if(target)target.classList.add("inspected");state.target=target;inspector.replaceChildren();inspector.append(element("p","inspector-context",context),element("h2","",data.label),element("p","inspector-intro",data.purpose));[["Recommended when",data.when],["Covers",data.covers],["Generated artifacts",data.artifacts],["Non-goals",data.non]].forEach(([label,value])=>{const box=element("div","detail");box.append(element("p","detail-label",label));if(Array.isArray(value)){const list=element("ul");value.forEach(item=>list.append(element("li","",item)));box.append(list)}else box.append(element("p","",value));inspector.append(box)});inspector.append(element("p","hint","Details follow hover, keyboard focus, or selection."));placeInspector()}
+    function placeInspector(){if(matchMedia("(max-width: 860px)").matches&&state.target)state.target.insertAdjacentElement("afterend",slot);else document.querySelector(".stage").append(slot)}
+    function wire(item,data,context){["mouseenter","focusin"].forEach(name=>item.addEventListener(name,()=>inspect(data,context,item)))}
+    function moduleData(id){const raw=config.modules[id];return{label:raw.title,purpose:raw.covers,when:raw.recommended_when,covers:[raw.covers],artifacts:raw.generated,non:"This module creates engineering records. It does not enforce runtime controls or replace canonical specialist systems."}}
+    function profilePayload(){return{route:state.route,answers:state.route==="custom"?state.answers:{},selected_modules:moduleOrder.filter(id=>state.selected.has(id))}}
+    function recommendations(){const found=new Set(config.profiles[state.route]?.modules||[]);if(state.route==="custom")config.questions.forEach(question=>{if(state.answers[question.id])question.recommends.forEach(id=>found.add(id))});return found}
+    function renderProfiles(){const mount=document.querySelector("#profiles");mount.replaceChildren();Object.entries(profileDetails).forEach(([id,data])=>{const button=element("button","item");button.dataset.profile=id;button.setAttribute("aria-pressed",String(id===state.route));button.append(element("span","item-title",data.label),element("span","item-copy",data.purpose),element("span","mark","✓"));wire(button,data,"Starting route");button.onclick=()=>{state.route=id;state.selected=new Set(config.profiles[id]?.modules||[]);mount.querySelectorAll("button").forEach(peer=>peer.setAttribute("aria-pressed",String(peer===button)));showPage(0);inspect(data,"Selected route",button)};mount.append(button)})}
+    function renderAssessment(){const mount=document.querySelector("#assessment");mount.replaceChildren();config.questions.forEach(question=>{state.answers[question.id]??=false;const module=moduleData(question.recommends[0]);const data={label:question.prompt,purpose:question.reason,when:`Answer Yes when this condition is known to be true. Yes recommends ${module.label}.`,covers:[question.reason,`Recommendation: ${module.label}`],artifacts:module.artifacts,non:"No project fact is inferred. A No answer creates no optional recommendation."};const row=element("div","item");row.tabIndex=0;const copy=element("span");copy.append(element("span","item-title",question.prompt),element("span","item-copy",question.reason));const binary=element("span","binary");binary.setAttribute("role","group");binary.setAttribute("aria-label",question.prompt);[false,true].forEach(value=>{const button=element("button",state.answers[question.id]===value?"on":"",value?"Yes":"No");button.setAttribute("aria-pressed",String(state.answers[question.id]===value));button.onclick=()=>{state.answers[question.id]=value;binary.querySelectorAll("button").forEach(peer=>{const active=peer===button;peer.classList.toggle("on",active);peer.setAttribute("aria-pressed",String(active))});inspect(data,`Answer recorded · ${button.textContent}`,row)};binary.append(button)});row.append(copy,binary);wire(row,data,"Assessment question");mount.append(row)})}
+    function renderModules(reset=false){const recommended=recommendations();if(reset)state.selected=new Set(recommended);const mount=document.querySelector("#modules");mount.replaceChildren();moduleOrder.forEach(id=>{const data=moduleData(id),button=element("button","item");button.setAttribute("aria-pressed",String(state.selected.has(id)));button.append(element("span","mark","✓"));const copy=element("span");copy.append(element("span","item-title",data.label),element("span","item-copy",data.purpose));button.append(copy);if(recommended.has(id))button.append(element("span","tag","Recommended"));wire(button,data,"Optional module");button.onclick=()=>{state.selected.has(id)?state.selected.delete(id):state.selected.add(id);renderModules();const current=[...mount.children][moduleOrder.indexOf(id)];inspect(data,state.selected.has(id)?"Module selected":"Module not selected",current)};mount.append(button)})}
+    function route(){return state.route==="custom"?[0,1,2,3]:[0,2,3]}
+    function defaultInspection(){if(state.page===0)inspect(profileDetails[state.route],"Selected route",document.querySelector(`[data-profile="${state.route}"]`));else if(state.page===1){const first=document.querySelector("#assessment .item");if(first)first.dispatchEvent(new Event("focusin"))}else if(state.page===2){const first=document.querySelector("#modules .item");if(first)first.dispatchEvent(new Event("focusin"))}}
+    async function renderPlan(){const notice=document.querySelector("#plan-notice"),next=document.querySelector("#next");notice.className="notice";notice.textContent="Preparing the real plan…";next.disabled=true;const response=await fetch("api/plan",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(profilePayload())});const data=await response.json();if(!response.ok)throw new Error(data.error||"Could not build the plan");state.plan=data;document.querySelector("#review-profile").textContent=profileDetails[state.route].label;const pills=document.querySelector("#review-modules");pills.replaceChildren();const selected=moduleOrder.filter(id=>state.selected.has(id));(selected.length?selected:[null]).forEach(id=>pills.append(element("span","pill",id?config.modules[id].title:"Core only")));const counts=document.querySelector("#counts");counts.replaceChildren();Object.entries(data.counts).forEach(([status,count])=>counts.append(element("span","count",`${count} ${status}`)));const plan=document.querySelector("#plan");plan.replaceChildren();data.files.forEach(file=>{const row=element("tr","plan-row");row.tabIndex=0;row.append(element("td","",file.status));const cell=element("td","",file.path);const needsApproval=file.status==="modified-generated"||file.status==="untracked-conflict";if(needsApproval){const label=element("label","approval");const check=element("input");check.type="checkbox";check.dataset.approval=file.path;check.addEventListener("change",updateConfirmation);label.append(check,document.createTextNode(" Approve replacement of this file"));cell.append(label);if(file.diff){const details=element("details","diff"),summary=element("summary","","Review diff"),pre=element("pre","",file.diff);details.append(summary,pre);cell.append(details)}}row.append(cell);const detail={label:file.path,purpose:`The current plan classifies this file as ${file.status}.`,when:"The file is part of the selected core or optional modules.",covers:["Rendered content and manifest checksum",needsApproval?"Explicit replacement approval":"No replacement approval required"],artifacts:[file.path],non:"The browser cannot change the target path or bypass the atomic installer."};wire(row,detail,"Planned artifact");plan.append(row)});notice.textContent=data.manual_integrations.length?`Manual integration review: ${data.manual_integrations.join(", ")}`:"No canonical integration conflicts detected.";updateConfirmation();const first=plan.querySelector("tr");if(first)first.dispatchEvent(new Event("focusin"))}
+    function updateConfirmation(){if(!state.plan)return;const required=state.plan.files.filter(file=>file.status==="modified-generated"||file.status==="untracked-conflict").length,approved=document.querySelectorAll("[data-approval]:checked").length;document.querySelector("#next").disabled=approved!==required}
+    function showPage(page){const pages=route();state.page=pages.includes(page)?page:pages[0];document.querySelectorAll("[data-page]").forEach(node=>node.hidden=Number(node.dataset.page)!==state.page);document.querySelectorAll(".step").forEach(step=>{const id=Number(step.dataset.step),position=pages.indexOf(id);step.hidden=position<0;step.querySelector(".step-index").textContent=String(position+1).padStart(2,"0");step.classList.toggle("active",id===state.page);step.classList.toggle("done",position>=0&&position<pages.indexOf(state.page));step.setAttribute("aria-current",id===state.page?"step":"false")});const position=pages.indexOf(state.page),name=state.page===0?"Starting point":state.page===1?"Custom assessment":state.page===2?"Review modules":"Review plan";document.querySelector(`[data-page="${state.page}"] [data-kicker]`).textContent=`Step ${position+1} of ${pages.length} · ${name}`;document.querySelector("#back").disabled=position===0;document.querySelector("#next").textContent=state.page===3?"Confirm plan":"Continue";document.querySelector("#next").disabled=false;if(state.page===2)renderModules(true);if(state.page===3)renderPlan().catch(showError);else defaultInspection();window.scrollTo({top:0,behavior:"smooth"})}
+    function move(offset){const pages=route(),position=pages.indexOf(state.page);showPage(pages[position+offset])}
+    function showError(error){const notice=document.querySelector("#plan-notice");notice.className="notice error";notice.textContent=error.message;document.querySelector("#next").disabled=true}
+    async function confirm(){const approved=[...document.querySelectorAll("[data-approval]:checked")].map(node=>node.dataset.approval);const response=await fetch("api/confirm",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({profile:profilePayload(),digest:state.plan.digest,approved_paths:approved})});const data=await response.json();if(!response.ok)throw new Error(data.error||"Could not confirm the plan");document.querySelectorAll("[data-page]").forEach(node=>node.hidden=Number(node.dataset.page)!==4);document.querySelector("#actions").hidden=true;slot.hidden=true}
+    async function cancel(){await fetch("api/cancel",{method:"POST",headers:{"Content-Type":"application/json"},body:"{}"});document.querySelector("#actions").hidden=true;document.querySelector(".content").prepend(element("div","notice","Setup cancelled. No files were changed."))}
+    let config;
+    async function start(){const response=await fetch("api/config");if(!response.ok)throw new Error("Could not load setup data");config=await response.json();document.querySelector("#target").textContent=`Target · ${config.target} · Nothing written yet`;if(config.previous){profileDetails.existing={label:"Current project profile",purpose:"Keep the recorded answers and begin from the modules already selected in this project.",when:"You are updating an existing Applied AI Rig installation without reassessing project facts.",covers:["Recorded project answers","Current module selection","Existing recommendation reasons"],artifacts:["Updated files for the retained profile"],non:"You can still add or decline modules before reviewing the plan."};state.route="existing";state.selected=new Set(config.previous.selected_modules)}else state.selected=new Set(config.profiles[state.route].modules);renderProfiles();renderAssessment();showPage(0)}
+    document.querySelector("#back").onclick=()=>move(-1);document.querySelector("#next").onclick=()=>state.page===3?confirm().catch(showError):move(1);document.querySelector("#cancel").onclick=()=>cancel().catch(showError);addEventListener("resize",placeInspector);start().catch(error=>{document.querySelector(".content").replaceChildren(element("div","notice error",error.message))});
+  </script>
+</body>
+</html>
