@@ -1,11 +1,37 @@
-# Tooling configuration for Applied AI Rig.
-#
-# Applied AI Rig ships as a standard-library-only tool that is used via
-# `git clone` + `python init.py`. Distribution metadata (build-system, project
-# table, console entry point) is intentionally omitted for now: the `templates/`
-# tree lives at the repository root, outside the `applied_ai_rig` package, so a
-# built wheel would not carry it. Relocating templates into the package is the
-# prerequisite for a pip/pipx-installable distribution.
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "applied-ai-rig"
+description = "A lightweight, modular engineering record for applied-AI projects."
+readme = "README.md"
+requires-python = ">=3.10"
+license = { text = "MIT" }
+authors = [{ name = "Baptiste Blouin" }]
+keywords = ["applied-ai", "engineering-record", "decision-records", "evidence"]
+dynamic = ["version"]
+
+[project.urls]
+Homepage = "https://github.com/BaptisteBlouin/applied-ai-rig"
+Repository = "https://github.com/BaptisteBlouin/applied-ai-rig"
+
+[project.scripts]
+applied-ai-rig = "applied_ai_rig.cli:main"
+
+[tool.setuptools]
+packages = ["applied_ai_rig"]
+
+[tool.setuptools.dynamic]
+version = { attr = "applied_ai_rig.__version__" }
+
+[tool.setuptools.package-data]
+applied_ai_rig = [
+    "templates/*",
+    "templates/*/*",
+    "templates/*/*/*",
+    "web/*.html",
+]
 
 [tool.ruff]
 target-version = "py310"

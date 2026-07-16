@@ -15,7 +15,7 @@ def profile(*modules: str) -> Profile:
 
 def plan_content(*modules: str) -> tuple[set[str], str]:
     with tempfile.TemporaryDirectory() as directory:
-        plan = build_plan(Path(directory), profile(*modules), ROOT / "templates")
+        plan = build_plan(Path(directory), profile(*modules), ROOT / "applied_ai_rig" / "templates")
     return (
         {item.relative_path.as_posix() for item in plan.files},
         "\n".join(item.content for item in plan.files),
@@ -87,11 +87,11 @@ class OperationsModuleTests(unittest.TestCase):
 class ModuleCompositionTests(unittest.TestCase):
     def test_register_guidance_is_generated_only_with_optional_modules(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
-            core = build_plan(Path(directory), profile(), ROOT / "templates")
+            core = build_plan(Path(directory), profile(), ROOT / "applied_ai_rig" / "templates")
             modular = build_plan(
                 Path(directory),
                 profile("model-api"),
-                ROOT / "templates",
+                ROOT / "applied_ai_rig" / "templates",
             )
 
         path = "docs/applied-ai-rig/REGISTER_GUIDANCE.md"
@@ -103,7 +103,7 @@ class ModuleCompositionTests(unittest.TestCase):
             plan = build_plan(
                 Path(directory),
                 profile("model-api", "evaluation", "operations"),
-                ROOT / "templates",
+                ROOT / "applied_ai_rig" / "templates",
             )
 
         guidance = next(

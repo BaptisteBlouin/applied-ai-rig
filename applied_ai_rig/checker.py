@@ -103,7 +103,7 @@ def check_project(target: Path) -> CheckResult:
         )
 
     manifest_entries = {entry.path: entry for entry in manifest.files}
-    template_root = Path(__file__).resolve().parents[1] / "templates"
+    template_root = Path(__file__).resolve().parent / "templates"
     for required in required_paths(profile, template_root):
         if required not in manifest_entries:
             findings.append(

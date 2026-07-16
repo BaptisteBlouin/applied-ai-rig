@@ -161,15 +161,18 @@ harnais-ia/
 │   ├── intake.py                   # Observable questions and module recommendations
 │   ├── installer.py                # Planning, rendering, conflict handling, and writes
 │   ├── manifest.py                 # Profile, checksums, and installed-file metadata
-│   └── checker.py                  # Structural validation only
-├── templates/
-│   ├── core/
-│   └── modules/
-│       ├── model-api/
-│       ├── data/
-│       ├── evaluation/
-│       ├── agentic-runtime/
-│       └── operations/
+│   ├── checker.py                  # Structural validation only
+│   ├── web_setup.py                # Temporary loopback-only setup interface
+│   ├── web/                        # Self-contained offline web assets
+│   └── templates/
+│       ├── core/
+│       ├── shared/
+│       └── modules/
+│           ├── model-api/
+│           ├── data/
+│           ├── evaluation/
+│           ├── agentic-runtime/
+│           └── operations/
 ├── tests/
 │   ├── fixtures/
 │   ├── test_cli.py

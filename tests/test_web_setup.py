@@ -142,7 +142,7 @@ class WebPlanTests(unittest.TestCase):
             target = Path(directory)
             conflict = target / "APPLIED_AI_RIG_AGENT.md"
             conflict.write_text("project-owned instructions\n", encoding="utf-8")
-            plan = build_plan(target, profile, ROOT / "templates")
+            plan = build_plan(target, profile, ROOT / "applied_ai_rig" / "templates")
 
             payload = plan_payload(plan)
 
@@ -159,7 +159,7 @@ class LocalWebServerTests(unittest.TestCase):
     def setUp(self) -> None:
         self.temp = tempfile.TemporaryDirectory()
         self.target = Path(self.temp.name)
-        self.session = WebSetupSession(self.target, ROOT / "templates", {})
+        self.session = WebSetupSession(self.target, ROOT / "applied_ai_rig" / "templates", {})
         self.server = create_web_server(self.session)
         self.thread = threading.Thread(target=self.server.serve_forever, daemon=True)
         self.thread.start()

@@ -13,7 +13,7 @@ ROOT = Path(__file__).resolve().parents[1]
 
 def install_fixture(target: Path, *modules: str) -> None:
     profile = Profile(1, "0.1.0", {}, tuple(modules), (), {})
-    plan = build_plan(target, profile, ROOT / "templates")
+    plan = build_plan(target, profile, ROOT / "applied_ai_rig" / "templates")
     install_plan(plan, approve=lambda _: True, installed_at="2026-07-15T10:00:00Z")
 
 

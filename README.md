@@ -45,6 +45,15 @@ python init.py /path/to/your-project
 On systems where the launcher is named `python3` (most Linux and macOS installations), run
 `python3 init.py …` in place of `python init.py …` throughout this guide.
 
+To install it as a reusable command instead of running from a clone:
+
+```bash
+pipx install git+https://github.com/BaptisteBlouin/applied-ai-rig.git
+applied-ai-rig /path/to/your-project
+```
+
+The installed `applied-ai-rig` command accepts the same arguments as `python init.py`.
+
 Review the proposed modules and files before confirming. For a preview that writes nothing:
 
 ```bash

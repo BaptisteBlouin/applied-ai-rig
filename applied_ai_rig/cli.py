@@ -81,7 +81,7 @@ def main(argv: Sequence[str] | None = None) -> int:
     if manifest_path.exists():
         manifest = Manifest.from_json(manifest_path.read_text(encoding="utf-8"))
         checksums = {item.path: item.original_checksum for item in manifest.files}
-    template_root = Path(__file__).resolve().parents[1] / "templates"
+    template_root = Path(__file__).resolve().parent / "templates"
     web_result: WebSetupResult | None = None
 
     if args.modules is not None:
