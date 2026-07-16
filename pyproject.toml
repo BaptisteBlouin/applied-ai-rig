@@ -1,5 +1,5 @@
 [build-system]
-requires = ["setuptools>=61"]
+requires = ["setuptools>=77.0.3"]
 build-backend = "setuptools.build_meta"
 
 [project]
@@ -7,13 +7,14 @@ name = "applied-ai-rig"
 description = "A lightweight, modular engineering record for applied-AI projects."
 readme = "README.md"
 requires-python = ">=3.10"
-license = { text = "MIT" }
+license = "MIT"
+license-files = ["LICENSE"]
 authors = [{ name = "Baptiste Blouin" }]
 keywords = ["applied-ai", "engineering-record", "decision-records", "evidence"]
 dynamic = ["version"]
 
 [project.optional-dependencies]
-dev = ["ruff", "mypy"]
+dev = ["ruff", "mypy", "packaging"]
 
 [project.urls]
 Homepage = "https://github.com/BaptisteBlouin/applied-ai-rig"
@@ -26,6 +27,7 @@ applied-ai-rig = "applied_ai_rig.cli:main"
 
 [tool.setuptools]
 packages = ["applied_ai_rig"]
+include-package-data = false
 
 [tool.setuptools.dynamic]
 version = { attr = "applied_ai_rig.__version__" }
@@ -46,4 +48,4 @@ target-version = "py310"
 [tool.mypy]
 python_version = "3.10"
 strict = true
-files = ["applied_ai_rig", "init.py"]
+files = ["applied_ai_rig", "init.py", "tools"]

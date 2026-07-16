@@ -239,8 +239,8 @@ as an optional `dev` extra and enforced in CI:
 pip install -e ".[dev]"
 
 python3 -m unittest discover -s tests -v      # tests
-python3 -m compileall -q init.py applied_ai_rig tests
-ruff check init.py applied_ai_rig tests      # lint
+python3 -m compileall -q init.py applied_ai_rig tests tools
+ruff check init.py applied_ai_rig tests tools  # lint
 mypy                                         # strict type check (configured in pyproject.toml)
 ```
 

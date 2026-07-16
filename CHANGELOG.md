@@ -11,6 +11,9 @@ All notable changes to Applied AI Rig are recorded here. Dates are added when a 
 - First-fifteen-minute guidance and progressive register completion without changing CSV headers.
 - Filled RAG, tool-agent, and production-service examples.
 - Composite structural-check action, integration recipes, JSON schemas, and community templates.
+- Private-pilot playbook and structured, privacy-preserving feedback form.
+- Distribution build and installed-wheel smoke tests in CI.
+- Secret scanning, dependency updates, and a Trusted Publishing release workflow.
 
 ### Changed
 

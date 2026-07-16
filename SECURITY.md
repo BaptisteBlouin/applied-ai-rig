@@ -7,3 +7,6 @@ content in a report.
 
 Applied AI Rig generates engineering records and performs structural checks. It is not a security scanner,
 secret vault, runtime policy engine, or compliance certification tool.
+
+The project CI scans the complete committed Git history with a checksum-pinned Gitleaks binary. This
+reduces accidental credential exposure but does not make the Rig or its generated records a secrets vault.

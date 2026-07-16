@@ -1,0 +1,89 @@
+name: Private pilot feedback
+description: Record sanitized usability evidence from an external pilot or rehearsal
+title: "pilot: P0X "
+body:
+  - type: markdown
+    attributes:
+      value: >-
+        Do not include secrets, source code, generated records, project names or URLs, personal data,
+        prompts, responses, private endpoints, screenshots, recordings, or confidential project content.
+        Private issues may become public later. Use only a pilot ID and sanitized summaries.
+  - type: dropdown
+    id: pilot_kind
+    attributes:
+      label: Evidence kind
+      description: Rehearsal results must not be counted as genuine external pilot evidence.
+      options:
+        - Genuine external pilot
+        - Rehearsal
+    validations:
+      required: true
+  - type: input
+    id: environment
+    attributes:
+      label: Safe environment summary
+      description: Operating system, Python version, and setup path only.
+      placeholder: Linux, Python 3.13, source checkout
+    validations:
+      required: true
+  - type: input
+    id: install_seconds
+    attributes:
+      label: Installation elapsed seconds
+      description: Enter whole seconds or `not completed`; include all retries.
+    validations:
+      required: true
+  - type: input
+    id: record_seconds
+    attributes:
+      label: First-real-record elapsed seconds
+      description: Enter whole seconds or `not completed`; a blank skeleton does not count.
+    validations:
+      required: true
+  - type: dropdown
+    id: later_update
+    attributes:
+      label: Later pull-request update
+      description: Was a Rig record updated in normal project work during the fourteen-day window?
+      options:
+        - Yes
+        - No
+        - Not observed yet
+    validations:
+      required: true
+  - type: input
+    id: followup_elapsed_days
+    attributes:
+      label: Follow-up elapsed days
+      description: Whole days since the timed session; an adoption Yes counts only at 14 days or later.
+      placeholder: "14"
+    validations:
+      required: true
+  - type: textarea
+    id: friction
+    attributes:
+      label: Observed friction
+      description: Describe safe observations, retries, blockers, and facilitator interventions without project content.
+    validations:
+      required: true
+  - type: textarea
+    id: unused
+    attributes:
+      label: Unused or misunderstood guidance
+      description: Which fields or instructions were skipped, duplicated, too heavy, or unclear, and why?
+    validations:
+      required: true
+  - type: textarea
+    id: followup
+    attributes:
+      label: Sanitized participant feedback
+      description: Summarize whether the record was understandable and whether they would use it again.
+    validations:
+      required: true
+  - type: checkboxes
+    id: privacy
+    attributes:
+      label: Privacy check
+      options:
+        - label: I used only a pilot ID and removed all private, personal, sensitive, and identifying content.
+          required: true

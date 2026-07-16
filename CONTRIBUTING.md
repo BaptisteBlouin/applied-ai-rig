@@ -15,7 +15,7 @@ Before proposing a change:
 3. Update the specification before changing stable IDs, schemas, generated paths, or conflict behavior.
 4. Add a failing test before changing behavior.
 5. Run the tests and quality gates: `python3 -m unittest discover -s tests -v`, `ruff check init.py
-   applied_ai_rig tests`, and `mypy` (install the tools with `pip install -e ".[dev]"`).
+   applied_ai_rig tests tools`, and `mypy` (install the tools with `pip install -e ".[dev]"`).
 
 For behavior changes, add a failing test first and show the red-to-green result. For templates and user
 guidance, add a focused content or worked-example test when the promise is important enough to preserve.
@@ -23,7 +23,7 @@ Keep pull requests scoped, describe compatibility effects, and update the change
 changes.
 
 Do not add providers, frameworks, telemetry, network access, or runtime dependencies without prior
-discussion. `ruff` and `mypy` are development-only tools, not runtime dependencies.
+discussion. `ruff`, `mypy`, and `packaging` are development-only tools, not runtime dependencies.
 
 By participating, contributors agree to follow the [code of conduct](CODE_OF_CONDUCT.md). Security reports
 must follow [SECURITY.md](SECURITY.md), not a public issue.

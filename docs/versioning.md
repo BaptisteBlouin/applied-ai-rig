@@ -40,3 +40,5 @@ Before a release:
 5. Tag the reviewed commit and pin consumer documentation to that tag.
 
 Publishing a package or tag is deliberately separate from merging implementation work.
+The exact Trusted Publishing setup, release procedure, failure handling, and non-destructive rollback are
+documented in the [release runbook](releasing.md).

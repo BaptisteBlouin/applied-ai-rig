@@ -5,6 +5,8 @@ AI engineering.
 
 ## Current: prove the V2 adoption workflow
 
+- Run the cohort using the [private pilot playbook](docs/pilot-playbook.md), without telemetry or collecting
+  private project content.
 - Exercise installation and first-record creation with at least five external pilot projects.
 - Target median installation under five minutes and a first real record within fifteen minutes.
 - Observe whether at least three pilots update the record in a later pull request.
