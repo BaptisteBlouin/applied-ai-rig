@@ -72,6 +72,8 @@ Use `--modules none` for a core-only installation.
 
 ## Guided setup
 
+![The guided web setup: a starting-point step with quick profiles on the left and a contextual explanation panel on the right](docs/images/web-setup.png)
+
 On an interactive terminal, setup opens a temporary local web interface. It is served only from
 `127.0.0.1`, works offline, uses no external assets, and stops after confirmation or cancellation. The
 interface offers four quick profiles plus a custom risk assessment:
