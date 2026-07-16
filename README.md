@@ -167,10 +167,19 @@ provider, framework, source tree, deployment platform, or observability vendor.
 
 ## Development
 
+The tool itself uses only the standard library. Linting and type checking use `ruff` and `mypy`, declared
+as an optional `dev` extra and enforced in CI:
+
 ```bash
-python -m unittest discover -s tests -v
+pip install -e ".[dev]"
+
+python -m unittest discover -s tests -v      # tests
 python -m compileall -q init.py applied_ai_rig tests
+ruff check init.py applied_ai_rig tests      # lint
+mypy                                         # strict type check (configured in pyproject.toml)
 ```
+
+Tests run on Linux, macOS, and Windows against Python 3.10 and 3.13.
 
 The approved V1 requirements are in [the specification](docs/spec.md), with implementation sequencing in
 [the plan](tasks/plan.md).

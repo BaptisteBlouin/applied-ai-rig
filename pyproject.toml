@@ -12,6 +12,9 @@ authors = [{ name = "Baptiste Blouin" }]
 keywords = ["applied-ai", "engineering-record", "decision-records", "evidence"]
 dynamic = ["version"]
 
+[project.optional-dependencies]
+dev = ["ruff", "mypy"]
+
 [project.urls]
 Homepage = "https://github.com/BaptisteBlouin/applied-ai-rig"
 Repository = "https://github.com/BaptisteBlouin/applied-ai-rig"
