@@ -7,6 +7,7 @@ import subprocess
 import sys
 import threading
 import webbrowser
+from collections.abc import Sequence
 from dataclasses import dataclass
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
@@ -48,11 +49,13 @@ class WebSetupSession:
         template_root: Path,
         known_checksums: Mapping[str, str],
         previous: Profile | None = None,
+        known_manual_integrations: Sequence[str] = (),
     ) -> None:
         self.target = target
         self.template_root = template_root
         self.known_checksums = dict(known_checksums)
         self.previous = previous
+        self.known_manual_integrations = tuple(known_manual_integrations)
         self.token = secrets.token_urlsafe(24)
         self.csp_nonce = secrets.token_urlsafe(24)
         self.result: WebSetupResult | None = None
@@ -65,6 +68,7 @@ class WebSetupSession:
             profile,
             self.template_root,
             self.known_checksums,
+            self.known_manual_integrations,
         )
 
 
@@ -416,8 +420,15 @@ def run_web_setup(
     *,
     open_browser: bool = True,
     output_fn: Any = print,
+    known_manual_integrations: Sequence[str] = (),
 ) -> WebSetupResult:
-    session = WebSetupSession(target, template_root, known_checksums, previous)
+    session = WebSetupSession(
+        target,
+        template_root,
+        known_checksums,
+        previous,
+        known_manual_integrations,
+    )
     server = create_web_server(session)
     url = f"http://127.0.0.1:{server.server_address[1]}/{session.token}/"
     output_fn(f"Applied AI Rig setup: {url}")

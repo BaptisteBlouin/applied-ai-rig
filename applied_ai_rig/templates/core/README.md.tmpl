@@ -10,8 +10,9 @@ register before the project needs it.
 1. Pick a consequential choice you are making now: a model, dataset, evaluation threshold, tool
    permission, operating limit, or fallback.
 2. Add it to [Decisions](DECISIONS.md). If the initializer command is installed, preview a skeleton with
-   `applied-ai-rig add decision . --id DEC-YYYYMMDD-short-name --title "Describe the choice"` and apply it
-   only after review with `--yes`.
+   `applied-ai-rig add decision . --id DEC-YYYYMMDD-short-name --title "Describe the choice"`, rerun that
+   command with `--yes`, then complete Context, Options, Decision, Consequences, and Revision threshold in
+   the appended record.
 3. Put one measured, estimated, or explicitly unknown claim in [Evidence](EVIDENCE.md) and link it to the
    decision. The optional `add evidence` command can create the skeleton.
 4. Record only the risk-specific module fields needed to explain that decision. Leave detailed telemetry

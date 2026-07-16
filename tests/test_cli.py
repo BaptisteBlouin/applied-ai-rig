@@ -1,8 +1,10 @@
+import json
 import subprocess
 import sys
 import tempfile
 import unittest
 from pathlib import Path
+from subprocess import STDOUT
 from unittest.mock import Mock
 
 from applied_ai_rig.cli import InteractiveApprover, WebApprover, run_setup_wizard
@@ -34,6 +36,7 @@ class CliSmokeTests(unittest.TestCase):
         self.assertIn("--profile", result.stdout)
         self.assertIn("--terminal", result.stdout)
         self.assertIn("--no-browser", result.stdout)
+        self.assertIn("--preserve-conflicts", result.stdout)
 
     def test_list_modules_explains_triggers_and_generated_artifacts(self) -> None:
         result = self.run_cli("--list-modules")
@@ -65,6 +68,8 @@ class CliSmokeTests(unittest.TestCase):
         self.assertIn("modules/model-api/README.md", result.stdout)
         self.assertIn("modules/data/README.md", result.stdout)
         self.assertIn("modules/evaluation/README.md", result.stdout)
+        self.assertIn("Selected modules: model-api, data, evaluation", result.stdout)
+        self.assertIn("First-use focus: decision and evidence", result.stdout)
 
     def test_unknown_argument_returns_usage_error(self) -> None:
         result = self.run_cli("--does-not-exist")
@@ -303,6 +308,11 @@ class CliSmokeTests(unittest.TestCase):
         self.assertIn("--yes", preview.stdout)
         self.assertEqual(write.returncode, 0, write.stderr)
         self.assertIn("Added DEC-20260716-model-choice", write.stdout)
+        self.assertIn(
+            "Complete Context, Options, Decision, Consequences, and Revision threshold",
+            write.stdout,
+        )
+        self.assertIn("add evidence", write.stdout)
         self.assertIn("DEC-20260716-model-choice", final)
         self.assertEqual(duplicate.returncode, 2)
         self.assertIn("already exists", duplicate.stderr)
@@ -425,6 +435,85 @@ class CliSmokeTests(unittest.TestCase):
 
         self.assertEqual(second.returncode, 3)
         self.assertEqual(after, before)
+        self.assertIn("no files were changed", second.stderr)
+        self.assertIn("--preserve-conflicts", second.stderr)
+        self.assertIn("--terminal", second.stderr)
+
+    def test_non_interactive_conflict_prints_the_plan_before_the_error(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            target = Path(directory)
+            conflict = target / "APPLIED_AI_RIG_AGENT.md"
+            conflict.write_text("project-owned policy\n", encoding="utf-8")
+
+            result = subprocess.run(
+                [
+                    sys.executable,
+                    str(ROOT / "init.py"),
+                    str(target),
+                    "--modules",
+                    "none",
+                    "--non-interactive",
+                ],
+                cwd=ROOT,
+                stdout=subprocess.PIPE,
+                stderr=STDOUT,
+                text=True,
+                check=False,
+            )
+
+        self.assertEqual(result.returncode, 3)
+        self.assertLess(
+            result.stdout.index("Applied AI Rig installation plan"),
+            result.stdout.index("Conflicts require a safe resolution"),
+        )
+
+    def test_preserve_conflicts_keeps_sidecars_and_survives_a_rerun(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            target = Path(directory)
+            agent = target / "APPLIED_AI_RIG_AGENT.md"
+            readme = target / "docs/applied-ai-rig/README.md"
+            readme.parent.mkdir(parents=True)
+            agent.write_text("# Existing agent policy\n", encoding="utf-8")
+            readme.write_text("# Existing project index\n", encoding="utf-8")
+
+            install = self.run_cli(
+                str(target),
+                "--modules",
+                "none",
+                "--non-interactive",
+                "--preserve-conflicts",
+            )
+            check = self.run_cli(str(target), "--check")
+            agent_sidecar = target / "APPLIED_AI_RIG_AGENT.project.md"
+            readme_sidecar = target / "docs/applied-ai-rig/README.project.md"
+            agent_sidecar_content = agent_sidecar.read_text(encoding="utf-8") if agent_sidecar.exists() else ""
+            readme_sidecar_content = readme_sidecar.read_text(encoding="utf-8") if readme_sidecar.exists() else ""
+            installed_agent_content = agent.read_text(encoding="utf-8")
+            installed_readme_content = readme.read_text(encoding="utf-8")
+            rerun = self.run_cli(
+                str(target), "--modules", "none", "--non-interactive"
+            )
+            manifest = json.loads(
+                (target / ".applied-ai-rig/manifest.json").read_text(encoding="utf-8")
+            ) if (target / ".applied-ai-rig/manifest.json").exists() else {}
+
+        self.assertEqual(install.returncode, 0, install.stderr)
+        self.assertEqual(check.returncode, 0, check.stdout + check.stderr)
+        self.assertEqual(rerun.returncode, 0, rerun.stderr)
+        self.assertEqual(agent_sidecar_content, "# Existing agent policy\n")
+        self.assertEqual(readme_sidecar_content, "# Existing project index\n")
+        self.assertIn("# Applied AI Rig instructions", installed_agent_content)
+        self.assertIn("# Applied AI Rig records", installed_readme_content)
+        self.assertIn("PRESERVE", install.stdout)
+        self.assertIn("APPLIED_AI_RIG_AGENT.project.md", install.stdout)
+        self.assertIn("README.project.md", install.stdout)
+        self.assertIn(
+            "APPLIED_AI_RIG_AGENT.project.md", manifest["manual_integrations"]
+        )
+        self.assertIn(
+            "docs/applied-ai-rig/README.project.md",
+            manifest["manual_integrations"],
+        )
 
 
 class InteractiveApprovalTests(unittest.TestCase):
@@ -449,8 +538,8 @@ class InteractiveApprovalTests(unittest.TestCase):
             approver(PlannedFile(Path("other.md"), "new\n", FileStatus.CONFLICT))
         )
 
-    def test_skip_all_rejects_following_conflicts_without_prompting(self) -> None:
-        input_fn = Mock(return_value="s")
+    def test_cancel_rejects_following_conflicts_without_prompting(self) -> None:
+        input_fn = Mock(return_value="c")
         output_fn = Mock()
         approver = InteractiveApprover(Path("/tmp/project"), input_fn, output_fn)
         item = PlannedFile(Path("one.md"), "new\n", FileStatus.CONFLICT)
@@ -458,6 +547,7 @@ class InteractiveApprovalTests(unittest.TestCase):
         self.assertFalse(approver(item))
         self.assertFalse(approver(item))
         self.assertEqual(input_fn.call_count, 1)
+        self.assertIn("cancel", input_fn.call_args.args[0])
 
 
 class SetupWizardTests(unittest.TestCase):

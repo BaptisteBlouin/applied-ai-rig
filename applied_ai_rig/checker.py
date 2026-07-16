@@ -36,6 +36,7 @@ REQUIRED_HEADINGS = {
 class Severity(str, Enum):
     ERROR = "error"
     WARNING = "warning"
+    INFO = "info"
 
 
 @dataclass(frozen=True)
@@ -56,6 +57,10 @@ class CheckResult:
     @property
     def warnings(self) -> tuple[Finding, ...]:
         return tuple(item for item in self.findings if item.severity is Severity.WARNING)
+
+    @property
+    def infos(self) -> tuple[Finding, ...]:
+        return tuple(item for item in self.findings if item.severity is Severity.INFO)
 
 
 def _finding(severity: Severity, path: str, message: str) -> Finding:
@@ -102,6 +107,16 @@ def check_project(target: Path) -> CheckResult:
             )
         )
 
+    for relative in manifest.manual_integrations:
+        if not target.joinpath(*Path(relative).parts).exists():
+            findings.append(
+                _finding(
+                    Severity.ERROR,
+                    relative,
+                    "Manual integration path is missing; restore it or update the installation manifest deliberately.",
+                )
+            )
+
     manifest_entries = {entry.path: entry for entry in manifest.files}
     template_root = Path(__file__).resolve().parent / "templates"
     for required in required_paths(profile, template_root):
@@ -125,9 +140,10 @@ def check_project(target: Path) -> CheckResult:
         if checksum != entry.original_checksum:
             findings.append(
                 _finding(
-                    Severity.WARNING,
+                    Severity.INFO,
                     entry.path,
-                    "Generated file differs from its installed template; review the local change before updating.",
+                    "Locally customized since installation; this is expected after authoring project records. "
+                    "A future replacement still requires explicit approval.",
                 )
             )
 

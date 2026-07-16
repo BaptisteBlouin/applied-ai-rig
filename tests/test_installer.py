@@ -6,9 +6,11 @@ from pathlib import Path
 from applied_ai_rig.installer import (
     FileStatus,
     InstallationCancelled,
+    PreservationError,
     build_plan,
     classify_file,
     install_plan,
+    preserve_conflicts,
     render_template,
 )
 from applied_ai_rig.manifest import Manifest
@@ -109,6 +111,35 @@ class CoreTemplateTests(unittest.TestCase):
 
 
 class ClassificationTests(unittest.TestCase):
+    def test_preservation_refuses_an_occupied_sidecar(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            target = Path(directory)
+            (target / "APPLIED_AI_RIG_AGENT.md").write_text(
+                "project-owned instructions\n", encoding="utf-8"
+            )
+            (target / "APPLIED_AI_RIG_AGENT.project.md").write_text(
+                "different preserved content\n", encoding="utf-8"
+            )
+            plan = build_plan(
+                target, core_profile(), ROOT / "applied_ai_rig" / "templates"
+            )
+
+            with self.assertRaisesRegex(PreservationError, "different content"):
+                preserve_conflicts(plan)
+
+    def test_preservation_refuses_non_markdown_conflicts(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            target = Path(directory)
+            profile = target / ".applied-ai-rig/profile.json"
+            profile.parent.mkdir(parents=True)
+            profile.write_text("project-owned metadata\n", encoding="utf-8")
+            plan = build_plan(
+                target, core_profile(), ROOT / "applied_ai_rig" / "templates"
+            )
+
+            with self.assertRaisesRegex(PreservationError, "non-Markdown"):
+                preserve_conflicts(plan)
+
     def test_missing_destination_is_new(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
             destination = Path(directory) / "README.md"
@@ -144,6 +175,80 @@ class ClassificationTests(unittest.TestCase):
 
 
 class AtomicInstallTests(unittest.TestCase):
+    def test_preservation_sidecar_created_after_preview_writes_nothing(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            target = Path(directory)
+            existing = target / "APPLIED_AI_RIG_AGENT.md"
+            sidecar = target / "APPLIED_AI_RIG_AGENT.project.md"
+            existing.write_text("project-owned instructions\n", encoding="utf-8")
+            plan = preserve_conflicts(
+                build_plan(target, core_profile(), ROOT / "applied_ai_rig" / "templates")
+            )
+            sidecar.write_text("created after preview\n", encoding="utf-8")
+
+            with self.assertRaisesRegex(InstallationCancelled, "changed after preview"):
+                install_plan(
+                    plan,
+                    approve=lambda _: True,
+                    installed_at="2026-07-15T10:00:00Z",
+                )
+
+            self.assertEqual(
+                existing.read_text(encoding="utf-8"),
+                "project-owned instructions\n",
+            )
+            self.assertEqual(
+                sidecar.read_text(encoding="utf-8"), "created after preview\n"
+            )
+            self.assertFalse((target / ".applied-ai-rig").exists())
+
+    def test_preserved_conflict_changed_after_preview_writes_nothing(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            target = Path(directory)
+            existing = target / "APPLIED_AI_RIG_AGENT.md"
+            existing.write_text("first version\n", encoding="utf-8")
+            plan = preserve_conflicts(
+                build_plan(target, core_profile(), ROOT / "applied_ai_rig" / "templates")
+            )
+            existing.write_text("changed after preview\n", encoding="utf-8")
+
+            with self.assertRaisesRegex(InstallationCancelled, "changed after preview"):
+                install_plan(
+                    plan,
+                    approve=lambda _: True,
+                    installed_at="2026-07-15T10:00:00Z",
+                )
+
+            self.assertEqual(
+                existing.read_text(encoding="utf-8"), "changed after preview\n"
+            )
+            self.assertFalse((target / "APPLIED_AI_RIG_AGENT.project.md").exists())
+            self.assertFalse((target / ".applied-ai-rig").exists())
+
+    def test_preserved_conflict_rolls_back_with_the_complete_installation(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            target = Path(directory)
+            existing = target / "APPLIED_AI_RIG_AGENT.md"
+            existing.write_text("project-owned instructions\n", encoding="utf-8")
+            plan = preserve_conflicts(
+                build_plan(target, core_profile(), ROOT / "applied_ai_rig" / "templates")
+            )
+
+            with self.assertRaisesRegex(RuntimeError, "simulated write failure"):
+                install_plan(
+                    plan,
+                    approve=lambda _: True,
+                    installed_at="2026-07-15T10:00:00Z",
+                    fail_after=2,
+                )
+
+            self.assertEqual(
+                existing.read_text(encoding="utf-8"),
+                "project-owned instructions\n",
+            )
+            self.assertFalse((target / "APPLIED_AI_RIG_AGENT.project.md").exists())
+            self.assertFalse((target / ".applied-ai-rig/manifest.json").exists())
+
     def test_existing_staging_directory_is_never_deleted(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
             target = Path(directory)

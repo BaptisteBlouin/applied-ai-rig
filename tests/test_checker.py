@@ -56,7 +56,29 @@ class ManifestCheckTests(unittest.TestCase):
 
         self.assertTrue(any(item.path == hidden for item in result.errors))
 
-    def test_user_modified_generated_file_is_a_warning(self) -> None:
+    def test_missing_manual_integration_is_an_error(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            target = Path(directory)
+            install_fixture(target)
+            manifest_path = target / ".applied-ai-rig/manifest.json"
+            data = json.loads(manifest_path.read_text(encoding="utf-8"))
+            data["manual_integrations"] = ["APPLIED_AI_RIG_AGENT.project.md"]
+            data["manual_integration_statuses"] = {
+                "APPLIED_AI_RIG_AGENT.project.md": "proposed"
+            }
+            manifest_path.write_text(json.dumps(data), encoding="utf-8")
+
+            result = check_project(target)
+
+        self.assertTrue(
+            any(
+                item.path == "APPLIED_AI_RIG_AGENT.project.md"
+                and "Manual integration path is missing" in item.message
+                for item in result.errors
+            )
+        )
+
+    def test_user_modified_generated_file_is_expected_local_customization(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
             target = Path(directory)
             install_fixture(target)
@@ -67,7 +89,12 @@ class ManifestCheckTests(unittest.TestCase):
             result = check_project(target)
 
         self.assertFalse(any(item.path.endswith("DECISIONS.md") for item in result.errors))
-        self.assertTrue(any(item.path.endswith("DECISIONS.md") for item in result.warnings))
+        self.assertFalse(any(item.path.endswith("DECISIONS.md") for item in result.warnings))
+        customized = [
+            item for item in result.findings if item.path.endswith("DECISIONS.md")
+        ]
+        self.assertEqual([item.severity.value for item in customized], ["info"])
+        self.assertIn("expected after authoring", customized[0].message)
 
 
 class ContentCheckTests(unittest.TestCase):

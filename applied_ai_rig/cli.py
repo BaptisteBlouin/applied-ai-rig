@@ -3,7 +3,7 @@ import shlex
 import sys
 from collections.abc import Sequence
 from datetime import datetime, timezone
-from pathlib import Path
+from pathlib import Path, PurePosixPath
 from typing import Callable
 
 from . import __version__
@@ -13,8 +13,10 @@ from .installer import (
     InstallationPlan,
     InstallationCancelled,
     PlannedFile,
+    PreservationError,
     build_plan,
     install_plan,
+    preserve_conflicts,
     unified_diff,
 )
 from .intake import MODULE_IDS, MODULE_INFO, QUESTIONS, SETUP_PROFILES, recommend_modules
@@ -51,6 +53,11 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--non-interactive", action="store_true", help="Disable interactive prompts")
     parser.add_argument("--terminal", action="store_true", help="Use the terminal wizard instead of the local web interface")
     parser.add_argument("--no-browser", action="store_true", help="Start the local web interface without opening a browser")
+    parser.add_argument(
+        "--preserve-conflicts",
+        action="store_true",
+        help="Preserve untracked Markdown conflicts as adjacent .project.md sidecars",
+    )
     return parser
 
 
@@ -77,6 +84,8 @@ def main(argv: Sequence[str] | None = None) -> int:
         parser.error("--terminal and --no-browser cannot be used together")
     if args.non_interactive and (args.terminal or args.no_browser):
         parser.error("--terminal and --no-browser are interactive options")
+    if args.preserve_conflicts and not (args.non_interactive or args.terminal):
+        parser.error("--preserve-conflicts requires --non-interactive or --terminal")
 
     if args.check:
         result = check_project(target)
@@ -85,16 +94,21 @@ def main(argv: Sequence[str] | None = None) -> int:
         if result.errors:
             print(f"Structural check found {len(result.errors)} error(s).")
             return 1
-        print(f"Structural check completed with {len(result.warnings)} warning(s).")
+        print(
+            f"Structural check completed with {len(result.warnings)} warning(s) "
+            f"and {len(result.infos)} informational finding(s)."
+        )
         return 0
 
     if args.modules is None and args.profile is None and args.non_interactive and not profile_path.exists():
         parser.error("--non-interactive requires --modules or --profile on a new project")
 
     checksums: dict[str, str] = {}
+    known_manual_integrations: tuple[str, ...] = ()
     if manifest_path.exists():
         manifest = Manifest.from_json(manifest_path.read_text(encoding="utf-8"))
         checksums = {item.path: item.original_checksum for item in manifest.files}
+        known_manual_integrations = manifest.manual_integrations
     template_root = Path(__file__).resolve().parent / "templates"
     web_result: WebSetupResult | None = None
 
@@ -125,6 +139,7 @@ def main(argv: Sequence[str] | None = None) -> int:
                     checksums,
                     previous,
                     open_browser=not args.no_browser,
+                    known_manual_integrations=known_manual_integrations,
                 )
                 profile = web_result.profile
             else:
@@ -149,6 +164,7 @@ def main(argv: Sequence[str] | None = None) -> int:
                     template_root,
                     checksums,
                     open_browser=not args.no_browser,
+                    known_manual_integrations=known_manual_integrations,
                 )
                 profile = web_result.profile
             else:
@@ -166,19 +182,40 @@ def main(argv: Sequence[str] | None = None) -> int:
             print("Setup cancelled; no files were changed.")
             return 2
 
-    plan = build_plan(target, profile, template_root, checksums)
+    plan = build_plan(
+        target,
+        profile,
+        template_root,
+        checksums,
+        known_manual_integrations,
+    )
+    if args.preserve_conflicts:
+        try:
+            plan = preserve_conflicts(plan)
+        except (OSError, PreservationError) as error:
+            print(f"Could not preserve conflicts: {error}; no files were changed.", file=sys.stderr)
+            return 3
     if web_result is not None and plan_payload(plan)["digest"] != web_result.plan_digest:
         print("The target changed after browser confirmation; no files were changed.", file=sys.stderr)
         return 3
     _print_plan(plan)
+    sys.stdout.flush()
     if args.dry_run:
         _print_diffs(plan)
         return 0
 
+    preserved_paths = {item.original_path for item in plan.preservations}
     if args.non_interactive and any(
-        item.status in (FileStatus.MODIFIED, FileStatus.CONFLICT) for item in plan.files
+        item.status is FileStatus.MODIFIED
+        or (item.status is FileStatus.CONFLICT and item.relative_path not in preserved_paths)
+        for item in plan.files
     ):
-        print("Conflicts require interactive approval; no files were changed.", file=sys.stderr)
+        print(
+            "Conflicts require a safe resolution; no files were changed. "
+            "Re-run with --preserve-conflicts to keep untracked Markdown files as sidecars, "
+            "or use --terminal to review replacements individually.",
+            file=sys.stderr,
+        )
         return 3
 
     if web_result is None and not args.non_interactive and _has_changes(plan):
@@ -195,6 +232,8 @@ def main(argv: Sequence[str] | None = None) -> int:
         approve: Callable[[PlannedFile], bool] = InteractiveApprover(plan.target)
         if web_result is not None:
             approve = WebApprover(web_result.approved_paths)
+        elif args.non_interactive and plan.preservations:
+            approve = PreservedConflictApprover(preserved_paths)
         install_plan(
             plan,
             approve=approve,
@@ -203,7 +242,7 @@ def main(argv: Sequence[str] | None = None) -> int:
     except InstallationCancelled as error:
         print(str(error), file=sys.stderr)
         return 2
-    _print_installation_next_steps(target)
+    _print_installation_next_steps(target, plan)
     return 0
 
 
@@ -230,6 +269,7 @@ def _is_workflow_command(raw_args: Sequence[str]) -> bool:
         "--terminal",
         "--no-browser",
         "--dry-run",
+        "--preserve-conflicts",
     }
     if any(argument in legacy_options for argument in raw_args[1:]):
         return False
@@ -298,7 +338,8 @@ def _workflow_main(raw_args: Sequence[str]) -> int:
             print(f"Modules: {modules}")
             print(
                 f"Structural health: {health} "
-                f"({len(status.check.errors)} error(s), {len(status.check.warnings)} warning(s))"
+                f"({len(status.check.errors)} error(s), {len(status.check.warnings)} warning(s), "
+                f"{len(status.check.infos)} info)"
             )
             for finding in status.check.findings:
                 print(
@@ -324,6 +365,28 @@ def _workflow_main(raw_args: Sequence[str]) -> int:
             return 0
         apply_record_change(change)
         print(f"Added {change.record_id} to {change.relative_path}.")
+        if args.record_type == "decision":
+            print("Next:")
+            print(
+                "  Complete Context, Options, Decision, Consequences, and Revision threshold "
+                f"in {change.relative_path}."
+            )
+            print(
+                "  Preview linked evidence with "
+                + _format_workflow_command(
+                    (
+                        "add",
+                        "evidence",
+                        str(change.target),
+                        "--id",
+                        "EVD-YYYYMMDD-short-name",
+                        "--claim",
+                        "Describe the supported claim",
+                        "--decision",
+                        change.record_id,
+                    )
+                )
+            )
         return 0
     except RecordError as error:
         print(str(error), file=sys.stderr)
@@ -365,8 +428,16 @@ def _format_workflow_command(command: Sequence[str]) -> str:
     return shlex.join((*_command_prefix(), *command))
 
 
-def _print_installation_next_steps(target: Path) -> None:
+def _print_installation_next_steps(target: Path, plan: InstallationPlan) -> None:
     resolved = str(target.resolve(strict=False))
+    if plan.preservations:
+        print("\nPreserved project content:")
+        for item in plan.preservations:
+            print(
+                f"  {item.original_path.as_posix()} -> {item.preserved_path.as_posix()} "
+                f"(sha256 {item.checksum})"
+            )
+        print("  Review and link or merge these sidecars; the originals were not discarded.")
     print("\nNext:")
     print(f"  {_format_workflow_command(('status', resolved))}")
     print(
@@ -549,11 +620,29 @@ def _print_module_detail(module_id: str, output_fn: Callable[[str], None]) -> No
 
 def _print_plan(plan: InstallationPlan) -> None:
     print(f"Applied AI Rig installation plan for {plan.target}")
-    for item in plan.files:
-        print(f"{item.status.name:10} {item.relative_path.as_posix()}")
+    selected = ", ".join(plan.profile.selected_modules) or "core only"
+    print(f"Selected modules: {selected}")
+    print("First-use focus: decision and evidence; other generated records are available when their risk applies.")
+    for preservation in plan.preservations:
+        print(
+            f"PRESERVE   {preservation.original_path.as_posix()} -> "
+            f"{preservation.preserved_path.as_posix()}"
+        )
+    for planned_file in plan.files:
+        print(
+            f"{planned_file.status.name:10} "
+            f"{planned_file.relative_path.as_posix()}"
+        )
+    preserved = {
+        preservation.preserved_path.as_posix()
+        for preservation in plan.preservations
+    }
     for path in plan.manual_integrations:
-        print(f"MANUAL     {path}: review integration with APPLIED_AI_RIG_AGENT.md")
-        print("           Suggested reference: See APPLIED_AI_RIG_AGENT.md for project AI-work guidance.")
+        if path in preserved or path.endswith(".project.md"):
+            print(f"MANUAL     {path}: review preserved content and link or merge it.")
+        else:
+            print(f"MANUAL     {path}: review integration with APPLIED_AI_RIG_AGENT.md")
+            print("           Suggested reference: See APPLIED_AI_RIG_AGENT.md for project AI-work guidance.")
 
 
 def _has_changes(plan: InstallationPlan) -> bool:
@@ -587,15 +676,23 @@ class InteractiveApprover:
         if destination.exists():
             self.output_fn(unified_diff(item, destination))
         reply = self.input_fn(
-            f"Replace {item.relative_path.as_posix()}? [y/N/a=all/s=skip all] "
+            f"Replace {item.relative_path.as_posix()}? [y/N/a=replace all/c=cancel] "
         ).strip().lower()
         if reply in ("a", "all"):
             self._remaining = True
             return True
-        if reply in ("s", "skip", "skip all"):
+        if reply in ("c", "cancel", "s", "skip", "skip all"):
             self._remaining = False
             return False
         return reply in ("y", "yes")
+
+
+class PreservedConflictApprover:
+    def __init__(self, preserved_paths: set[PurePosixPath]) -> None:
+        self.preserved_paths = frozenset(preserved_paths)
+
+    def __call__(self, item: PlannedFile) -> bool:
+        return item.relative_path in self.preserved_paths
 
 
 class WebApprover:

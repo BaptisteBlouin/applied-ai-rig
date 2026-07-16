@@ -95,6 +95,17 @@ applied-ai-rig /path/to/your-project
 
 The installed `applied-ai-rig` command accepts the same arguments as `python3 init.py`.
 
+For a maintainer-provided wheel during a private rehearsal, use an isolated environment:
+
+```bash
+python3 -m venv .venv
+.venv/bin/python -m pip install /path/to/applied_ai_rig-VERSION-py3-none-any.whl
+.venv/bin/applied-ai-rig /path/to/your-project
+```
+
+On Windows, the corresponding executables are `.venv\Scripts\python` and
+`.venv\Scripts\applied-ai-rig`.
+
 Review the proposed modules and files before confirming. For a preview that writes nothing:
 
 ```bash
@@ -117,12 +128,13 @@ Use `--modules none` for a core-only installation.
 
 On an interactive terminal, setup opens a temporary local web interface. It is served only from
 `127.0.0.1`, works offline, uses no external assets, and stops after confirmation or cancellation. The
-interface offers four quick profiles plus a custom risk assessment:
+interface offers four quick profiles plus a custom risk assessment. The identifiers accepted by
+`--profile` are shown in parentheses:
 
-1. Minimal core.
-2. API or RAG application.
-3. Agent with tools.
-4. Production AI service.
+1. Minimal core (`minimal`).
+2. API or RAG application (`api-rag`).
+3. Agent with tools (`agent`).
+4. Production AI service (`production`).
 5. Custom assessment.
 
 Quick profiles and the custom assessment are alternative starting routes. Both lead to an explicit module
@@ -188,10 +200,12 @@ applied-ai-rig add decision /path/to/your-project \
   --title "Choose the initial model"
 ```
 
-Review the skeleton, complete it after writing, then rerun the command with `--yes`. The same safe workflow
-supports `add evidence` and, when the evaluation module is installed, `add experiment`. Appends reject
-duplicate IDs and a file that changed after preview. These commands are optional: generated Markdown and
-CSV files remain usable without the initializer.
+Review the skeleton, rerun the same command with `--yes`, then complete Context, Options, Decision,
+Consequences, and Revision threshold in the appended record. The CLI prints this next action and the
+command for previewing linked evidence. The same safe workflow supports `add evidence` and, when the
+evaluation module is installed, `add experiment`. Appends reject duplicate IDs and a file that changed
+after preview. These commands are optional: generated Markdown and CSV files remain usable without the
+initializer.
 
 ## Safe by default
 
@@ -200,6 +214,9 @@ CSV files remain usable without the initializer.
 - Changed generated text receives a readable diff before interactive approval.
 - Non-interactive conflicts fail without changing the target.
 - Existing agent instructions and canonical project policies are never merged automatically.
+- `--preserve-conflicts` can keep untracked Markdown conflicts byte-for-byte in adjacent `.project.md`
+  sidecars before installing the generated files. The plan shows every preservation path and checksum;
+  occupied or non-Markdown sidecars are refused without writes.
 - Installation writes are staged and rolled back on failure.
 - The initializer performs no network request, telemetry, stack inference, or target-code execution.
 - The optional local setup server binds only to `127.0.0.1`, validates session, host, origin, payload size,
