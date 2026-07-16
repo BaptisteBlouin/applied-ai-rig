@@ -71,7 +71,7 @@ class RecordChangeTests(unittest.TestCase):
 
         self.assertEqual(final, "concurrent edit\n")
 
-    def test_evidence_records_basis_and_related_decision(self) -> None:
+    def test_evidence_records_one_classification_and_related_decision(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
             target = Path(directory)
             install_fixture(target)
@@ -88,7 +88,7 @@ class RecordChangeTests(unittest.TestCase):
             )
 
         self.assertIn("**Status:** measured", change.addition)
-        self.assertIn("**Basis:** measured", change.addition)
+        self.assertNotIn("**Basis:**", change.addition)
         self.assertIn("**Related decisions:** DEC-20260716-model-choice", change.addition)
 
     def test_evidence_rejects_a_missing_related_decision(self) -> None:

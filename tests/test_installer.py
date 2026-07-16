@@ -89,8 +89,21 @@ class CoreTemplateTests(unittest.TestCase):
         content = "\n".join(item.content for item in plan.files)
         for field in ("Decision ID", "Status", "Supersedes", "Revision threshold", "Evidence ID"):
             self.assertIn(field, content)
+        self.assertNotIn("**Basis:**", content)
         self.assertNotIn("OpenAI", content)
         self.assertNotIn("LangChain", content)
+
+    def test_agent_delivery_check_uses_the_installed_command(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            plan = build_plan(Path(directory), core_profile(), ROOT / "applied_ai_rig" / "templates")
+
+        agent = next(
+            item.content
+            for item in plan.files
+            if item.relative_path.as_posix() == "APPLIED_AI_RIG_AGENT.md"
+        )
+        self.assertIn("applied-ai-rig <project> --check", agent)
+        self.assertNotIn("python3 init.py --check", agent)
 
     def test_core_defines_the_full_work_cycle_and_handoff_rules(self) -> None:
         with tempfile.TemporaryDirectory() as directory:

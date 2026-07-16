@@ -32,6 +32,7 @@ class WorkedExampleTests(unittest.TestCase):
                 self.assertIn("decision -> evidence", readme.lower())
                 self.assertTrue(DECISION_ID.findall(decisions))
                 self.assertTrue(EVIDENCE_ID.findall(evidence))
+                self.assertNotIn("**Basis:**", evidence)
                 for raw in LINK.findall(readme):
                     if "://" not in raw:
                         self.assertTrue((directory / raw.split("#", 1)[0]).exists(), raw)

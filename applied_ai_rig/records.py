@@ -253,7 +253,6 @@ def propose_evidence(
 - **Evidence ID:** {record_id}
 - **Claim:** {claim}
 - **Status:** {status}
-- **Basis:** {status}
 - **Source:** Unknown — link the run, test, report, issue, or canonical external system.
 - **Scope:** Unknown — state what this evidence covers.
 - **Limitations:** Unknown — state what this evidence does not prove.

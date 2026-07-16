@@ -23,6 +23,9 @@ All notable changes to Applied AI Rig are recorded here. Dates are added when a 
 - Successful installation prints exact status and first-decision commands.
 - Normal record edits are informational local customizations rather than structural warnings.
 - Installation plans show selected modules and the first-use focus; decision writes print their exact next steps.
+- Evidence uses `Status` as its single measured, estimated, or unknown classification instead of duplicating
+  the same value in `Basis`.
+- Generated agent instructions use the installed `applied-ai-rig <project> --check` delivery command.
 
 ### Compatibility
 
