@@ -2,6 +2,13 @@
 
 All notable changes to Applied AI Rig are recorded here. Dates are added when a release is published.
 
+## [Unreleased]
+
+### Changed
+
+- The Quick start installs the published PyPI package and consistently uses the installed command; source
+  checkout instructions now live under Development.
+
 ## [0.2.0] - 2026-07-16
 
 ### Added

@@ -103,44 +103,39 @@ record for low-volume projects or safe indexes into external canonical tools for
 
 Applied AI Rig requires Python 3.10 or later and uses only the standard library.
 
-```bash
-git clone https://github.com/BaptisteBlouin/applied-ai-rig.git
-cd applied-ai-rig
-python3 init.py /path/to/your-project
-```
-
-On Windows, use `py init.py …` when `python3` is not the configured launcher.
-
-To install it as a reusable command instead of running from a clone:
+Install the published package with `pipx` to keep the command isolated from your project environment:
 
 ```bash
-pipx install git+https://github.com/BaptisteBlouin/applied-ai-rig.git
+pipx install applied-ai-rig
 applied-ai-rig /path/to/your-project
 ```
 
-The installed `applied-ai-rig` command accepts the same arguments and subcommands as `python3 init.py`.
-
-For a maintainer-provided wheel during a private rehearsal, use an isolated environment:
+Without `pipx`, install from PyPI in a virtual environment:
 
 ```bash
 python3 -m venv .venv
-.venv/bin/python -m pip install /path/to/applied_ai_rig-VERSION-py3-none-any.whl
+.venv/bin/python -m pip install applied-ai-rig
 .venv/bin/applied-ai-rig /path/to/your-project
 ```
 
-On Windows, the corresponding executables are `.venv\Scripts\python` and
-`.venv\Scripts\applied-ai-rig`.
+On Windows, use the corresponding executables:
+
+```powershell
+py -m venv .venv
+.venv\Scripts\python -m pip install applied-ai-rig
+.venv\Scripts\applied-ai-rig C:\path\to\your-project
+```
 
 Review the proposed modules and files before confirming. For a preview that writes nothing:
 
 ```bash
-python3 init.py /path/to/your-project --dry-run
+applied-ai-rig /path/to/your-project --dry-run
 ```
 
 For scripted installation with explicit modules:
 
 ```bash
-python3 init.py /path/to/your-project \
+applied-ai-rig /path/to/your-project \
   --modules model-api,data,evaluation \
   --non-interactive
 ```
@@ -170,14 +165,14 @@ individual approval before the plan can be confirmed.
 Use the terminal wizard when a browser is unavailable or undesirable:
 
 ```bash
-python3 init.py /path/to/your-project --terminal
+applied-ai-rig /path/to/your-project --terminal
 ```
 
 For SSH and remote environments, start the web interface without attempting to open a browser, then open
 the printed loopback URL through the environment's normal forwarding mechanism:
 
 ```bash
-python3 init.py /path/to/your-project --no-browser
+applied-ai-rig /path/to/your-project --no-browser
 ```
 
 When standard input or output is not a TTY, the initializer keeps the deterministic terminal behavior.
@@ -186,15 +181,15 @@ When standard input or output is not a TTY, the initializer keeps the determinis
 Inspect the choices without starting the wizard:
 
 ```bash
-python3 init.py --list-modules
-python3 init.py --explain evaluation
+applied-ai-rig --list-modules
+applied-ai-rig --explain evaluation
 ```
 
 Use a quick profile directly, interactively or in automation:
 
 ```bash
-python3 init.py /path/to/your-project --profile api-rag
-python3 init.py /path/to/your-project --profile production --non-interactive
+applied-ai-rig /path/to/your-project --profile api-rag
+applied-ai-rig /path/to/your-project --profile production --non-interactive
 ```
 
 Named profiles are starting points, not claims about the project. Review the resulting modules and decline
@@ -203,7 +198,7 @@ anything that does not apply.
 ## Structural check
 
 ```bash
-python3 init.py --check /path/to/your-project
+applied-ai-rig --check /path/to/your-project
 ```
 
 The check validates the installed manifest, selected files, internal links, CSV headers, and unresolved
@@ -249,9 +244,8 @@ applied-ai-rig add experiment /path/to/your-project \
 ```
 
 Both commands preview their append by default; rerun with `--yes` to write it. Appends reject duplicate IDs
-and a file that changed after preview. From a source clone, replace `applied-ai-rig` in every command above
-with `python3 init.py` (or `py init.py` on Windows). These commands are optional: generated Markdown and CSV
-files remain usable without the initializer.
+and a file that changed after preview. These commands are optional: generated Markdown and CSV files remain
+usable without the initializer.
 
 ## Safe by default
 
@@ -300,6 +294,8 @@ The tool itself uses only the standard library. Linting and type checking use `r
 as an optional `dev` extra and enforced in CI:
 
 ```bash
+git clone https://github.com/BaptisteBlouin/applied-ai-rig.git
+cd applied-ai-rig
 pip install -e ".[dev]"
 
 python3 -m unittest discover -s tests -v      # tests
@@ -307,6 +303,9 @@ python3 -m compileall -q init.py applied_ai_rig tests tools
 ruff check init.py applied_ai_rig tests tools  # lint
 mypy                                         # strict type check (configured in pyproject.toml)
 ```
+
+From a source clone, `python3 init.py` accepts the same arguments and subcommands as the installed
+`applied-ai-rig` command. On Windows, use `py init.py`.
 
 Tests run on Linux, macOS, and Windows against Python 3.10 and 3.13.
 
