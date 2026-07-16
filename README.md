@@ -2,6 +2,7 @@
 
 [![CI](https://github.com/BaptisteBlouin/applied-ai-rig/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/BaptisteBlouin/applied-ai-rig/actions/workflows/ci.yml)
 [![Security](https://github.com/BaptisteBlouin/applied-ai-rig/actions/workflows/security.yml/badge.svg?branch=main)](https://github.com/BaptisteBlouin/applied-ai-rig/actions/workflows/security.yml)
+[![PyPI](https://img.shields.io/pypi/v/applied-ai-rig)](https://pypi.org/project/applied-ai-rig/)
 [![License: MIT](https://img.shields.io/github/license/BaptisteBlouin/applied-ai-rig)](LICENSE)
 
 **Make consequential AI changes reviewable by humans and coding agents.**
