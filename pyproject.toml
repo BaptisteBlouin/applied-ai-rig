@@ -1,0 +1,18 @@
+# Tooling configuration for Applied AI Rig.
+#
+# Applied AI Rig ships as a standard-library-only tool that is used via
+# `git clone` + `python init.py`. Distribution metadata (build-system, project
+# table, console entry point) is intentionally omitted for now: the `templates/`
+# tree lives at the repository root, outside the `applied_ai_rig` package, so a
+# built wheel would not carry it. Relocating templates into the package is the
+# prerequisite for a pip/pipx-installable distribution.
+
+[tool.ruff]
+target-version = "py310"
+# The default lint selection (E4/E7/E9 + F) is kept. E501 is deliberately not
+# enabled: the codebase relies on long, descriptive single lines.
+
+[tool.mypy]
+python_version = "3.10"
+strict = true
+files = ["applied_ai_rig", "init.py"]
