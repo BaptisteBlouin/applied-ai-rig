@@ -26,6 +26,8 @@ All notable changes to Applied AI Rig are recorded here. Dates are added when a 
 - Evidence uses `Status` as its single measured, estimated, or unknown classification instead of duplicating
   the same value in `Basis`.
 - Generated agent instructions use the installed `applied-ai-rig <project> --check` delivery command.
+- The README adds section navigation, complete record-command examples, portable branch links, and clearer
+  version, source-clone, update, and removal guidance.
 
 ### Compatibility
 

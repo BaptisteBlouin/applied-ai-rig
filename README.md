@@ -6,6 +6,26 @@ Applied AI Rig keeps the reason behind a model, dataset, evaluation, tool permis
 fallback in the repository. It connects decisions to evidence and risk-specific records without requiring
 a governance platform or imposing an application stack.
 
+Development version: **0.2.0 (unreleased)**. See the [changelog](CHANGELOG.md),
+[versioning policy](docs/versioning.md), and
+[published releases](https://github.com/BaptisteBlouin/applied-ai-rig/releases).
+
+## Contents
+
+- [The problem it solves](#the-problem-it-solves)
+- [A concrete example](#a-concrete-example)
+- [Fit](#fit)
+- [What it generates](#what-it-generates)
+- [Quick start](#quick-start)
+- [Guided setup](#guided-setup)
+- [Structural check](#structural-check)
+- [Daily workflow](#daily-workflow)
+- [Safe by default](#safe-by-default)
+- [Re-running and updating](#re-running-and-updating)
+- [Interoperability](#interoperability)
+- [Non-goals](#non-goals)
+- [Development](#development)
+
 ## The problem it solves
 
 An AI-enabled application can keep working while its engineering context disappears: why a model was
@@ -93,7 +113,7 @@ pipx install git+https://github.com/BaptisteBlouin/applied-ai-rig.git
 applied-ai-rig /path/to/your-project
 ```
 
-The installed `applied-ai-rig` command accepts the same arguments as `python3 init.py`.
+The installed `applied-ai-rig` command accepts the same arguments and subcommands as `python3 init.py`.
 
 For a maintainer-provided wheel during a private rehearsal, use an isolated environment:
 
@@ -202,10 +222,31 @@ applied-ai-rig add decision /path/to/your-project \
 
 Review the skeleton, rerun the same command with `--yes`, then complete Context, Options, Decision,
 Consequences, and Revision threshold in the appended record. The CLI prints this next action and the
-command for previewing linked evidence. The same safe workflow supports `add evidence` and, when the
-evaluation module is installed, `add experiment`. Appends reject duplicate IDs and a file that changed
-after preview. These commands are optional: generated Markdown and CSV files remain usable without the
-initializer.
+command for previewing linked evidence. Evidence must reference an existing decision:
+
+```bash
+applied-ai-rig add evidence /path/to/your-project \
+  --id EVD-20260716-model-latency \
+  --claim "Candidate latency is below the acceptance threshold" \
+  --decision DEC-20260716-model-choice \
+  --status measured
+```
+
+When the `evaluation` module is installed, an experiment can be linked to the same decision:
+
+```bash
+applied-ai-rig add experiment /path/to/your-project \
+  --run-id RUN-20260716-candidate \
+  --decision DEC-20260716-model-choice \
+  --model candidate-model \
+  --metric p95_latency_ms \
+  --value 420
+```
+
+Both commands preview their append by default; rerun with `--yes` to write it. Appends reject duplicate IDs
+and a file that changed after preview. From a source clone, replace `applied-ai-rig` in every command above
+with `python3 init.py` (or `py init.py` on Windows). These commands are optional: generated Markdown and CSV
+files remain usable without the initializer.
 
 ## Safe by default
 
@@ -230,9 +271,10 @@ Run the same initializer command again. The installed profile records selected m
 records generated paths and original checksums. Unchanged files are skipped. User-modified generated files
 require explicit review.
 
-V1 has no automatic removal command. To remove the Rig, inspect `.applied-ai-rig/manifest.json`, review each
-listed path, delete only files that you no longer need, then remove `.applied-ai-rig/`. Do not delete a file
-solely because it appears in the manifest: it may contain project-owned changes.
+Applied AI Rig currently has no automatic removal command. To remove the Rig, inspect
+`.applied-ai-rig/manifest.json`, review each listed path, delete only files that you no longer need, then
+remove `.applied-ai-rig/`. Do not delete a file solely because it appears in the manifest: it may contain
+project-owned changes.
 
 ## Interoperability
 
@@ -263,8 +305,9 @@ mypy                                         # strict type check (configured in 
 
 Tests run on Linux, macOS, and Windows against Python 3.10 and 3.13.
 
-The V1 specification, design explorations, and task history live on the [`v1`](../../tree/v1) branch; the
-V2 adoption-work history lives on [`v2`](../../tree/v2). The `main` branch keeps the production surface.
+The V1 specification, design explorations, and task history live on the
+[`v1`](https://github.com/BaptisteBlouin/applied-ai-rig/tree/v1) branch; the V2 adoption-work history lives on
+[`v2`](https://github.com/BaptisteBlouin/applied-ai-rig/tree/v2). The `main` branch keeps the production surface.
 Version and migration guarantees are documented in [versioning](docs/versioning.md). See the
 [changelog](CHANGELOG.md), [roadmap](ROADMAP.md), and [contribution guide](CONTRIBUTING.md) before proposing
 a change.
