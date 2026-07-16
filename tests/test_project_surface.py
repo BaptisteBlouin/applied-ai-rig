@@ -89,11 +89,11 @@ class ProjectSurfaceTests(unittest.TestCase):
             with self.subTest(path=path):
                 self.assertTrue((ROOT / path).is_file())
 
-    def test_v2_uses_a_new_minor_version_without_changing_schema_version(self) -> None:
+    def test_release_uses_the_current_minor_version_without_changing_schema_version(self) -> None:
         changelog = (ROOT / "CHANGELOG.md").read_text(encoding="utf-8")
 
         self.assertEqual(applied_ai_rig.__version__, "0.2.0")
-        self.assertIn("## [0.2.0] - Unreleased", changelog)
+        self.assertIn("## [0.2.0] - 2026-07-16", changelog)
         self.assertIn("schema version remains 1", changelog.lower())
 
 

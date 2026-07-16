@@ -2,7 +2,7 @@
 
 All notable changes to Applied AI Rig are recorded here. Dates are added when a release is published.
 
-## [0.2.0] - Unreleased
+## [0.2.0] - 2026-07-16
 
 ### Added
 
@@ -33,7 +33,3 @@ All notable changes to Applied AI Rig are recorded here. Dates are added when a 
 
 - Profile and manifest schema version remains 1.
 - V1 module IDs, generated paths, register headers, conflict behavior, and offline operation remain stable.
-
-## [0.1.0] - Unreleased
-
-- Initial modular engineering record, guided setup, safe installer, structural checker, and five risk modules.

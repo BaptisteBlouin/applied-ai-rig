@@ -1,12 +1,16 @@
 # Applied AI Rig
 
+[![CI](https://github.com/BaptisteBlouin/applied-ai-rig/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/BaptisteBlouin/applied-ai-rig/actions/workflows/ci.yml)
+[![Security](https://github.com/BaptisteBlouin/applied-ai-rig/actions/workflows/security.yml/badge.svg?branch=main)](https://github.com/BaptisteBlouin/applied-ai-rig/actions/workflows/security.yml)
+[![License: MIT](https://img.shields.io/github/license/BaptisteBlouin/applied-ai-rig)](LICENSE)
+
 **Make consequential AI changes reviewable by humans and coding agents.**
 
 Applied AI Rig keeps the reason behind a model, dataset, evaluation, tool permission, cost limit, or
 fallback in the repository. It connects decisions to evidence and risk-specific records without requiring
 a governance platform or imposing an application stack.
 
-Development version: **0.2.0 (unreleased)**. See the [changelog](CHANGELOG.md),
+Current version: **0.2.0**. See the [changelog](CHANGELOG.md),
 [versioning policy](docs/versioning.md), and
 [published releases](https://github.com/BaptisteBlouin/applied-ai-rig/releases).
 
