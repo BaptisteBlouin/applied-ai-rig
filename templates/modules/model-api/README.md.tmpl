@@ -2,6 +2,9 @@
 
 Use this module when the application calls external or metered model services.
 
+Follow the shared [register guidance](../../REGISTER_GUIDANCE.md). In particular, `api_usage.csv` records
+decision-relevant aggregates by run, release, workload, or billing period; it must not become a request log.
+
 ## Boundaries
 
 - Load credentials from an approved secret mechanism. Never record their values here.

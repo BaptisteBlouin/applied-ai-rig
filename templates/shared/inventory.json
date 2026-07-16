@@ -1,0 +1,7 @@
+[
+  {
+    "shared": "register-guidance",
+    "source": "REGISTER_GUIDANCE.md.tmpl",
+    "destination": "docs/applied-ai-rig/REGISTER_GUIDANCE.md"
+  }
+]

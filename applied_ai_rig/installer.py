@@ -131,12 +131,16 @@ def build_plan(
     }
 
     entries = _load_inventory(template_root / "core")
+    if profile.selected_modules:
+        entries.extend(_load_inventory(template_root / "shared"))
     for module_id in profile.selected_modules:
         entries.extend(_load_inventory(template_root / "modules" / module_id))
 
     planned: list[PlannedFile] = []
     for entry in entries:
         source = template_root / "core" / entry["source"]
+        if entry.get("shared"):
+            source = template_root / "shared" / entry["source"]
         if "module" in entry:
             source = template_root / "modules" / entry["module"] / entry["source"]
         relative = PurePosixPath(entry["destination"])
@@ -170,6 +174,8 @@ def build_plan(
 
 def required_paths(profile: Profile, template_root: Path) -> tuple[str, ...]:
     entries = _load_inventory(template_root / "core")
+    if profile.selected_modules:
+        entries.extend(_load_inventory(template_root / "shared"))
     for module_id in profile.selected_modules:
         entries.extend(_load_inventory(template_root / "modules" / module_id))
     paths = [entry["destination"] for entry in entries]

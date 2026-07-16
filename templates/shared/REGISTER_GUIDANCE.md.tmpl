@@ -1,0 +1,113 @@
+# Register guidance
+
+Applied AI Rig registers are portable, reviewable indexes for decision-relevant engineering records. They
+are not intended to replace databases, observability platforms, experiment trackers, data catalogs,
+incident systems, billing systems, or runtime audit stores.
+
+> One row per decision-relevant record, not one row per runtime event.
+
+## Choose the system of record
+
+Choose and record one operating mode for each register.
+
+### Embedded register
+
+The versioned CSV is the system of record. Use this mode when the register is small, changes infrequently,
+has one owner or a coordinated group of writers, contains no sensitive payload, and benefits from pull
+request review. This is often appropriate for model, data, service, action, and misuse-case inventories in
+small or medium projects.
+
+### External index
+
+An access-controlled external tool is the system of record. The CSV keeps only the subset needed to explain
+decisions, releases, claims, risks, or incidents, together with a stable external reference. Use this mode
+for high-volume activity, concurrent writers, sensitive metadata, advanced queries, retention enforcement,
+or organization-wide workflows.
+
+Document the chosen system, accountable owner, access path, and reconciliation cadence in the module
+README or a linked project decision. Do not maintain two competing systems of record.
+
+## Row contract
+
+Every row must have one declared grain: the exact real-world record represented by one row. IDs must be
+stable and unique within their register. References such as `decision_id`, `evidence_id`, `run_id`, and
+external references must resolve to the canonical record or clearly remain unknown.
+
+Before adding rows, define:
+
+- which columns are required, optional, controlled, or allowed to be `unknown`;
+- the owner responsible for correctness and review;
+- when a row is created, updated, closed, superseded, archived, or reconciled;
+- the permitted values for status-like fields;
+- the source and timestamp for measured, estimated, or billed values;
+- whether the CSV or an external tool is authoritative.
+
+Do not silently delete invalid, failed, declined, or superseded records when they remain relevant to an
+engineering decision. Mark their state and link the evidence or decision that explains it.
+
+## Scale and externalization triggers
+
+Move the system of record out of Git when any of these conditions becomes material:
+
+- rows are produced automatically for runtime events;
+- frequent or concurrent writers cause merge conflicts;
+- the file becomes difficult to review as a complete change;
+- users need filtering, aggregation, joins, dashboards, retention jobs, or access control;
+- row-level permissions or sensitive metadata cannot be represented safely in the repository;
+- another organizational tool already owns the lifecycle and audit history;
+- updates must be transactional or immediately consistent.
+
+Externalization is not a failure of the Rig. The CSV then becomes a deliberate decision index or may contain
+only a documented pointer to the canonical system.
+
+## Register-specific grain
+
+| Register | Intended row | Do not use it for |
+|---|---|---|
+| `model_register.csv` | One governed model configuration or version policy | Every inference request |
+| `api_usage.csv` | One decision-relevant aggregate for a run, release, workload, or billing period | One row per API call or trace span |
+| `data_register.csv` | One governed data source, dataset, or materially distinct derivative | Individual records or personal data |
+| `experiments.csv` | One baseline, decision-relevant variant, regression check, or cited final run | Every exploratory trace or repeated sample |
+| `action_register.csv` | One category of model-directed action and its control boundary | Every action execution or audit event |
+| `misuse_cases.csv` | One representative abuse or failure scenario | Raw security telemetry |
+| `service_register.csv` | One operated workload or service | Individual health samples or alerts |
+| `incident_register.csv` | One incident summary linked to its canonical timeline and review | Full event timelines, logs, or chat transcripts |
+
+For `api_usage.csv`, aggregate request counts, tokens, latency, failures, retries, and cost at a grain that
+supports a decision or reconciliation. Preserve detailed usage in billing or observability systems. For
+`experiments.csv`, retain runs that establish baselines, affect choices, support claims, or demonstrate
+regressions; keep detailed prompts, responses, samples, spans, and secondary metrics in the experiment
+system.
+
+## Collaboration and Git
+
+CSV works best with a single accountable owner, append-oriented changes, stable ordering, UTF-8, and one
+logical record per line. Avoid spreadsheet features, formulas, embedded newlines, and manual column
+reordering. Quote fields according to standard CSV rules and review the rendered diff before merging.
+
+If concurrent writers are common, use an external system of record and periodically reconcile the
+decision-relevant index. Do not solve repeated merge conflicts by silently accepting both versions; check
+for duplicate IDs, conflicting states, and lost updates.
+
+## Sensitive and prohibited content
+
+Never put secrets, credential values, private endpoints, prompts, model responses, personal records,
+sensitive payloads, provider request IDs, raw traces, or unrestricted incident evidence in versioned
+registers. Store access-controlled material in its canonical system and keep only a safe reference and
+decision-relevant summary.
+
+Repository visibility does not make sensitive content safe, and later deletion from Git does not guarantee
+removal from history or clones.
+
+## Review checklist
+
+Before relying on a register:
+
+- confirm its row grain and system of record;
+- confirm IDs and references are stable and resolvable;
+- confirm unknown values remain explicit rather than guessed;
+- confirm the repository contains no prohibited content;
+- confirm aggregate measurements state their period and basis;
+- confirm external references are durable and access-controlled;
+- confirm the owner and reconciliation cadence are current;
+- externalize the register when volume, concurrency, querying, retention, or access needs exceed Git.

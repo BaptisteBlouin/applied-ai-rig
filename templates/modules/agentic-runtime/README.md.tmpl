@@ -2,6 +2,9 @@
 
 Use this module when model-driven behavior can call tools or produce a side effect.
 
+Follow the shared [register guidance](../../REGISTER_GUIDANCE.md). Registers describe action categories and
+representative misuse cases; runtime executions and audit events belong in access-controlled systems.
+
 - Grant every tool the minimum permission and resource scope required.
 - Validate tool arguments in deterministic code and treat model output as untrusted.
 - Require human approval before destructive, irreversible, costly, or externally visible actions.

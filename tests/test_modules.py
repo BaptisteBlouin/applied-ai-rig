@@ -85,6 +85,45 @@ class OperationsModuleTests(unittest.TestCase):
 
 
 class ModuleCompositionTests(unittest.TestCase):
+    def test_register_guidance_is_generated_only_with_optional_modules(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            core = build_plan(Path(directory), profile(), ROOT / "templates")
+            modular = build_plan(
+                Path(directory),
+                profile("model-api"),
+                ROOT / "templates",
+            )
+
+        path = "docs/applied-ai-rig/REGISTER_GUIDANCE.md"
+        self.assertNotIn(path, {item.relative_path.as_posix() for item in core.files})
+        self.assertIn(path, {item.relative_path.as_posix() for item in modular.files})
+
+    def test_register_guidance_defines_scale_and_externalization_contract(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            plan = build_plan(
+                Path(directory),
+                profile("model-api", "evaluation", "operations"),
+                ROOT / "templates",
+            )
+
+        guidance = next(
+            item.content
+            for item in plan.files
+            if item.relative_path.as_posix()
+            == "docs/applied-ai-rig/REGISTER_GUIDANCE.md"
+        ).lower()
+        for phrase in (
+            "one row per decision-relevant record",
+            "embedded register",
+            "external index",
+            "system of record",
+            "concurrent writers",
+            "sensitive",
+            "api_usage.csv",
+            "experiments.csv",
+        ):
+            self.assertIn(phrase, guidance)
+
     def test_core_only_has_no_optional_module_paths_or_links(self) -> None:
         paths, content = plan_content()
 

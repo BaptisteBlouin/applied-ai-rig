@@ -8,6 +8,10 @@ Use `python init.py --list-modules` for a summary or `python init.py --explain <
 coverage, and generated artifacts. Interactive setup offers editable quick profiles and a custom assessment;
 `--modules` remains available for exact scripted selection.
 
+Every optional module also installs `REGISTER_GUIDANCE.md`. It defines the two supported operating modes —
+embedded register and external index — together with row grain, ownership, scale, concurrency, sensitive
+content, and externalization rules. The repository-level rationale is in [registers.md](registers.md).
+
 ## Core
 
 The core is always installed. It contains operating principles, decisions, evidence, reading order,
