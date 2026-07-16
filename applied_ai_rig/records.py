@@ -25,6 +25,16 @@ EVIDENCE_ENTRY = re.compile(
     r"^- \*\*Evidence ID:\*\*\s+(EVD-[A-Za-z0-9][A-Za-z0-9._-]*)\s*$",
     re.MULTILINE,
 )
+REGISTER_COUNT_NAMES = {
+    "api_usage.csv": "api_usage",
+    "model_register.csv": "models",
+    "data_register.csv": "data",
+    "experiments.csv": "experiments",
+    "action_register.csv": "actions",
+    "misuse_cases.csv": "misuse_cases",
+    "incident_register.csv": "incidents",
+    "service_register.csv": "services",
+}
 
 
 class RecordError(RuntimeError):
@@ -67,6 +77,48 @@ class ProjectStatus:
         if self.next_command is not None:
             return shlex.join(self.next_command)
         return self.next_instruction
+
+
+@dataclass(frozen=True)
+class RegisterStep:
+    module_id: str
+    count_name: str
+    relative_path: str
+    action: str
+
+
+REGISTER_STEPS = (
+    RegisterStep(
+        "model-api",
+        "models",
+        "docs/applied-ai-rig/modules/model-api/model_register.csv",
+        "Complete the minimum useful fields in",
+    ),
+    RegisterStep(
+        "data",
+        "data",
+        "docs/applied-ai-rig/modules/data/data_register.csv",
+        "Complete the minimum useful fields in",
+    ),
+    RegisterStep(
+        "agentic-runtime",
+        "actions",
+        "docs/applied-ai-rig/modules/agentic-runtime/action_register.csv",
+        "Complete the minimum useful fields in",
+    ),
+    RegisterStep(
+        "agentic-runtime",
+        "misuse_cases",
+        "docs/applied-ai-rig/modules/agentic-runtime/misuse_cases.csv",
+        "Record one representative denial path in",
+    ),
+    RegisterStep(
+        "operations",
+        "services",
+        "docs/applied-ai-rig/modules/operations/service_register.csv",
+        "Complete the minimum useful fields in",
+    ),
+)
 
 
 def _load_installation(target: Path) -> tuple[Path, Profile, Manifest]:
@@ -144,13 +196,10 @@ def propose_decision(
     target: Path,
     record_id: str,
     title: str,
-    status: str = "proposed",
 ) -> RecordChange:
     target, _, manifest = _load_installation(target)
     record_id = _require_identifier("Decision ID", record_id, DECISION_ID)
     title = _require_one_line("Decision title", title)
-    if status not in {"proposed", "accepted", "superseded", "rejected"}:
-        raise RecordError(f"Unknown decision status: {status}")
     relative = "docs/applied-ai-rig/DECISIONS.md"
     _, content, _ = _read_managed_file(target, manifest, relative)
     if record_id in DECISION_ENTRY.findall(content):
@@ -159,7 +208,7 @@ def propose_decision(
 ## {record_id} — {title}
 
 - **Decision ID:** {record_id}
-- **Status:** {status}
+- **Status:** proposed
 - **Context:** Unknown — record the constraint or risk that requires this choice.
 - **Options:** Unknown — list the real alternatives considered.
 - **Decision:** Unknown — record what is selected and why.
@@ -239,28 +288,29 @@ def propose_experiment(
         raise RecordError("The experiments.csv header is invalid; run the structural check before adding a row.")
     if any(len(row) > 1 and row[1] == run_id for row in rows[1:]):
         raise RecordError(f"Run ID already exists: {run_id}")
-    row = [
-        timestamp,
-        run_id,
-        decision_id,
-        "unknown",
-        "unknown",
-        "unknown",
-        "unknown",
-        model,
-        "unknown",
-        "Unknown — complete before interpreting the result.",
-        "candidate",
-        metric,
-        value,
-        "",
-        "pending",
-        "pending",
-        "",
-        "",
-        "",
-        "Created by the Applied AI Rig CLI; complete unknown fields before citing.",
-    ]
+    fields = {
+        "timestamp_utc": timestamp,
+        "run_id": run_id,
+        "decision_id": decision_id,
+        "code_revision": "unknown",
+        "dataset_id": "unknown",
+        "dataset_version": "unknown",
+        "dataset_fingerprint": "unknown",
+        "model": model,
+        "config_ref": "unknown",
+        "hypothesis": "Unknown — complete before interpreting the result.",
+        "variant": "candidate",
+        "primary_metric": metric,
+        "primary_value": value,
+        "baseline_run_id": "",
+        "result": "pending",
+        "decision": "pending",
+        "api_usage_ref": "",
+        "evidence_id": "",
+        "external_system_ref": "",
+        "notes": "Created by the Applied AI Rig CLI; complete unknown fields before citing.",
+    }
+    row = [fields[column] for column in EXPECTED_CSV_HEADERS["experiments.csv"]]
     output = io.StringIO(newline="")
     csv.writer(output, lineterminator="\n").writerow(row)
     return _change(target, manifest, relative, output.getvalue(), run_id)
@@ -320,38 +370,47 @@ def _csv_record_count(path: Path) -> int:
 
 
 def project_status(target: Path) -> ProjectStatus:
-    target, profile, manifest = _load_installation(target)
-    decisions_path, decisions, _ = _read_managed_file(
+    target = target.resolve(strict=False)
+    profile_path = target / ".applied-ai-rig/profile.json"
+    manifest_path = target / ".applied-ai-rig/manifest.json"
+    if not profile_path.exists() and not manifest_path.exists():
+        raise RecordError("Applied AI Rig is not installed in this target; run the initializer first.")
+    check = check_project(target)
+    try:
+        target, profile, manifest = _load_installation(target)
+    except RecordError:
+        return ProjectStatus(
+            target=target,
+            selected_modules=(),
+            check=check,
+            counts={"decisions": 0, "evidence": 0},
+            next_command=(str(target), "--check"),
+            next_instruction="",
+        )
+    decisions = _managed_content_or_empty(
         target, manifest, "docs/applied-ai-rig/DECISIONS.md"
     )
-    evidence_path, evidence, _ = _read_managed_file(
+    evidence = _managed_content_or_empty(
         target, manifest, "docs/applied-ai-rig/EVIDENCE.md"
     )
-    del decisions_path, evidence_path
     decision_ids = DECISION_ENTRY.findall(decisions)
     evidence_ids = EVIDENCE_ENTRY.findall(evidence)
     counts: dict[str, int] = {
         "decisions": len(decision_ids),
         "evidence": len(evidence_ids),
     }
-    register_names = {
-        "api_usage.csv": "api_usage",
-        "model_register.csv": "models",
-        "data_register.csv": "data",
-        "experiments.csv": "experiments",
-        "action_register.csv": "actions",
-        "misuse_cases.csv": "misuse_cases",
-        "incident_register.csv": "incidents",
-        "service_register.csv": "services",
-    }
     for entry in manifest.files:
         name = Path(entry.path).name
-        if name in register_names:
-            counts[register_names[name]] = _csv_record_count(target.joinpath(*Path(entry.path).parts))
+        if name in REGISTER_COUNT_NAMES:
+            counts[REGISTER_COUNT_NAMES[name]] = _csv_record_count(
+                target.joinpath(*Path(entry.path).parts)
+            )
 
     next_command: tuple[str, ...] | None
     next_instruction = ""
-    if not decision_ids:
+    if check.errors:
+        next_command = (str(target), "--check")
+    elif not decision_ids:
         next_command = (
             "add",
             "decision",
@@ -389,46 +448,30 @@ def project_status(target: Path) -> ProjectStatus:
             "--value",
             "unknown",
         )
-    elif "model-api" in profile.selected_modules and counts.get("models", 0) == 0:
-        next_command = None
-        next_instruction = (
-            "Complete the minimum useful fields in "
-            "docs/applied-ai-rig/modules/model-api/model_register.csv."
-        )
-    elif "data" in profile.selected_modules and counts.get("data", 0) == 0:
-        next_command = None
-        next_instruction = (
-            "Complete the minimum useful fields in "
-            "docs/applied-ai-rig/modules/data/data_register.csv."
-        )
-    elif "agentic-runtime" in profile.selected_modules and counts.get("actions", 0) == 0:
-        next_command = None
-        next_instruction = (
-            "Complete the minimum useful fields in "
-            "docs/applied-ai-rig/modules/agentic-runtime/action_register.csv."
-        )
-    elif "agentic-runtime" in profile.selected_modules and counts.get("misuse_cases", 0) == 0:
-        next_command = None
-        next_instruction = (
-            "Record one representative denial path in "
-            "docs/applied-ai-rig/modules/agentic-runtime/misuse_cases.csv."
-        )
-    elif "operations" in profile.selected_modules and counts.get("services", 0) == 0:
-        next_command = None
-        next_instruction = (
-            "Complete the minimum useful fields in "
-            "docs/applied-ai-rig/modules/operations/service_register.csv."
-        )
     else:
         next_command = None
-        next_instruction = (
-            "Review docs/applied-ai-rig/DELIVERY_CHECKLIST.md at the next meaningful handoff."
-        )
+        for step in REGISTER_STEPS:
+            if step.module_id in profile.selected_modules and counts.get(step.count_name, 0) == 0:
+                next_instruction = f"{step.action} {target / step.relative_path}."
+                break
+        else:
+            next_instruction = (
+                f"Review {target / 'docs/applied-ai-rig/DELIVERY_CHECKLIST.md'} "
+                "at the next meaningful handoff."
+            )
     return ProjectStatus(
         target=target,
         selected_modules=profile.selected_modules,
-        check=check_project(target),
+        check=check,
         counts=counts,
         next_command=next_command,
         next_instruction=next_instruction,
     )
+
+
+def _managed_content_or_empty(target: Path, manifest: Manifest, relative_path: str) -> str:
+    try:
+        _, content, _ = _read_managed_file(target, manifest, relative_path)
+    except RecordError:
+        return ""
+    return content

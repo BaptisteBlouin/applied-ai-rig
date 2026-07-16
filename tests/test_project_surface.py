@@ -8,6 +8,7 @@ import applied_ai_rig
 
 ROOT = Path(__file__).resolve().parents[1]
 MARKDOWN_LINK = re.compile(r"\[[^]]+\]\(([^)]+)\)")
+PUBLIC_URL = re.compile(r"https://[^\s)\"']+")
 
 
 class ProjectSurfaceTests(unittest.TestCase):
@@ -20,6 +21,13 @@ class ProjectSurfaceTests(unittest.TestCase):
             path = raw.split("#", 1)[0]
             with self.subTest(link=raw):
                 self.assertTrue((ROOT / path).exists())
+
+        external = PUBLIC_URL.findall(readme)
+        self.assertTrue(external)
+        for raw in external:
+            with self.subTest(public_link=raw):
+                self.assertTrue(raw.startswith("https://"))
+                self.assertNotIn("example.com", raw)
 
     def test_composite_action_runs_the_checker_from_its_own_checkout(self) -> None:
         action = (ROOT / "action.yml").read_text(encoding="utf-8")
@@ -46,7 +54,6 @@ class ProjectSurfaceTests(unittest.TestCase):
                 "selected_modules",
                 "files",
                 "manual_integrations",
-                "manual_integration_statuses",
             },
         }
         for filename, required in expected.items():
@@ -55,6 +62,16 @@ class ProjectSurfaceTests(unittest.TestCase):
                 self.assertEqual(schema["$schema"], "https://json-schema.org/draft/2020-12/schema")
                 self.assertFalse(schema["additionalProperties"])
                 self.assertEqual(set(schema["required"]), required)
+
+        profile = json.loads((ROOT / "schemas/profile.schema.json").read_text(encoding="utf-8"))
+        manifest = json.loads((ROOT / "schemas/manifest.schema.json").read_text(encoding="utf-8"))
+        self.assertEqual(len(profile["allOf"]), 5)
+        self.assertTrue(manifest["properties"]["files"]["uniqueItems"])
+        self.assertIn("unique", manifest["properties"]["files"]["$comment"].lower())
+        self.assertIn(
+            "not",
+            manifest["properties"]["manual_integrations"]["items"],
+        )
 
     def test_private_launch_preparation_has_community_entry_points(self) -> None:
         paths = (

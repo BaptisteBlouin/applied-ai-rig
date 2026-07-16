@@ -42,6 +42,48 @@
       }
     }
   },
+  "allOf": [
+    {
+      "not": {
+        "properties": {
+          "selected_modules": {"contains": {"const": "model-api"}},
+          "declined_modules": {"contains": {"const": "model-api"}}
+        }
+      }
+    },
+    {
+      "not": {
+        "properties": {
+          "selected_modules": {"contains": {"const": "data"}},
+          "declined_modules": {"contains": {"const": "data"}}
+        }
+      }
+    },
+    {
+      "not": {
+        "properties": {
+          "selected_modules": {"contains": {"const": "evaluation"}},
+          "declined_modules": {"contains": {"const": "evaluation"}}
+        }
+      }
+    },
+    {
+      "not": {
+        "properties": {
+          "selected_modules": {"contains": {"const": "agentic-runtime"}},
+          "declined_modules": {"contains": {"const": "agentic-runtime"}}
+        }
+      }
+    },
+    {
+      "not": {
+        "properties": {
+          "selected_modules": {"contains": {"const": "operations"}},
+          "declined_modules": {"contains": {"const": "operations"}}
+        }
+      }
+    }
+  ],
   "$defs": {
     "moduleId": {
       "enum": [

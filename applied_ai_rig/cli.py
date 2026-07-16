@@ -56,7 +56,7 @@ def build_parser() -> argparse.ArgumentParser:
 
 def main(argv: Sequence[str] | None = None) -> int:
     raw_args = list(argv) if argv is not None else sys.argv[1:]
-    if raw_args and raw_args[0] in {"status", "add"}:
+    if _is_workflow_command(raw_args):
         return _workflow_main(raw_args)
     parser = build_parser()
     args = parser.parse_args(raw_args)
@@ -207,6 +207,37 @@ def main(argv: Sequence[str] | None = None) -> int:
     return 0
 
 
+def _is_workflow_command(raw_args: Sequence[str]) -> bool:
+    if not raw_args:
+        return False
+    if raw_args[0] == "add":
+        return len(raw_args) > 1 and raw_args[1] in {
+            "decision",
+            "evidence",
+            "experiment",
+            "--help",
+            "-h",
+        }
+    if raw_args[0] != "status":
+        return False
+    legacy_options = {
+        "--check",
+        "--modules",
+        "--profile",
+        "--list-modules",
+        "--explain",
+        "--non-interactive",
+        "--terminal",
+        "--no-browser",
+        "--dry-run",
+    }
+    if any(argument in legacy_options for argument in raw_args[1:]):
+        return False
+    if len(raw_args) > 1:
+        return True
+    return Path(".applied-ai-rig/profile.json").is_file()
+
+
 def _workflow_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         prog="applied-ai-rig",
@@ -223,11 +254,6 @@ def _workflow_parser() -> argparse.ArgumentParser:
     _add_record_target_and_write_mode(decision)
     decision.add_argument("--id", required=True, dest="record_id")
     decision.add_argument("--title", required=True)
-    decision.add_argument(
-        "--status",
-        choices=("proposed", "accepted", "superseded", "rejected"),
-        default="proposed",
-    )
 
     evidence = record_types.add_parser("evidence", help="Add evidence linked to a decision")
     _add_record_target_and_write_mode(evidence)
@@ -271,6 +297,11 @@ def _workflow_main(raw_args: Sequence[str]) -> int:
                 f"Structural health: {health} "
                 f"({len(status.check.errors)} error(s), {len(status.check.warnings)} warning(s))"
             )
+            for finding in status.check.findings:
+                print(
+                    f"  {finding.severity.value.upper()} {finding.path}: "
+                    f"{finding.message}"
+                )
             print("Records:")
             for name, count in status.counts.items():
                 print(f"  {name}: {count}")
@@ -298,7 +329,7 @@ def _workflow_main(raw_args: Sequence[str]) -> int:
 def _propose_record(args: argparse.Namespace) -> RecordChange:
     target = Path(args.target)
     if args.record_type == "decision":
-        return propose_decision(target, args.record_id, args.title, args.status)
+        return propose_decision(target, args.record_id, args.title)
     if args.record_type == "evidence":
         return propose_evidence(
             target,

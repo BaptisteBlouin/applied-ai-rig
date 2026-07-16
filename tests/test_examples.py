@@ -52,6 +52,8 @@ class WorkedExampleTests(unittest.TestCase):
                     self.assertEqual(tuple(rows[0]), EXPECTED_CSV_HEADERS[path.name])
                     self.assertTrue(rows)
                     for row in rows:
+                        self.assertNotIn(None, row)
+                        self.assertNotIn(None, row.values())
                         if row.get("decision_id"):
                             self.assertIn(row["decision_id"], decisions)
                         if row.get("evidence_id"):

@@ -104,6 +104,18 @@ class RecordChangeTests(unittest.TestCase):
                     decision_id="DEC-missing",
                 )
 
+    def test_evidence_rejects_duplicate_ids(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            target = Path(directory)
+            install_fixture(target)
+            apply_record_change(propose_decision(target, "DEC-001", "Choose a model"))
+            apply_record_change(
+                propose_evidence(target, "EVD-001", "Candidate passed", "DEC-001")
+            )
+
+            with self.assertRaisesRegex(RecordError, "already exists"):
+                propose_evidence(target, "EVD-001", "Another claim", "DEC-001")
+
     def test_experiment_requires_the_evaluation_module(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
             target = Path(directory)
@@ -159,6 +171,33 @@ class RecordChangeTests(unittest.TestCase):
                     metric="accuracy",
                     value="0.91",
                     timestamp="2026-07-16T10:00:00Z",
+                )
+
+    def test_experiment_rejects_duplicate_run_ids(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            target = Path(directory)
+            install_fixture(target, "evaluation")
+            apply_record_change(propose_decision(target, "DEC-001", "Choose a model"))
+            first = propose_experiment(
+                target,
+                "RUN-001",
+                "DEC-001",
+                "model-a",
+                "accuracy",
+                "0.91",
+                "2026-07-16T10:00:00Z",
+            )
+            apply_record_change(first)
+
+            with self.assertRaisesRegex(RecordError, "already exists"):
+                propose_experiment(
+                    target,
+                    "RUN-001",
+                    "DEC-001",
+                    "model-b",
+                    "accuracy",
+                    "0.92",
+                    "2026-07-16T11:00:00Z",
                 )
 
     def test_record_write_rechecks_that_the_destination_stays_inside_target(self) -> None:

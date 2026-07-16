@@ -10,8 +10,7 @@
     "installed_at",
     "selected_modules",
     "files",
-    "manual_integrations",
-    "manual_integration_statuses"
+    "manual_integrations"
   ],
   "properties": {
     "schema_version": {
@@ -34,6 +33,8 @@
     },
     "files": {
       "type": "array",
+      "uniqueItems": true,
+      "$comment": "File paths must also be unique across entries; Manifest enforces that cross-item invariant at runtime.",
       "items": {
         "type": "object",
         "additionalProperties": false,
@@ -58,11 +59,15 @@
       "uniqueItems": true,
       "items": {
         "type": "string",
-        "minLength": 1
+        "minLength": 1,
+        "not": {
+          "pattern": "(^/|^[A-Za-z]:|(^|/)\\.\\.(/|$)|\\\\)"
+        }
       }
     },
     "manual_integration_statuses": {
       "type": "object",
+      "$comment": "When present, keys must exactly match manual_integrations; Manifest enforces this cross-property invariant at runtime.",
       "additionalProperties": {
         "enum": ["proposed", "accepted", "declined", "completed"]
       }

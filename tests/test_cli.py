@@ -124,6 +124,77 @@ class CliSmokeTests(unittest.TestCase):
         self.assertIn("experiments: 0", status.stdout)
         self.assertIn("add decision", status.stdout)
 
+    def test_status_reports_a_broken_core_instead_of_aborting(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            install = self.run_cli(directory, "--modules", "none", "--non-interactive")
+            (Path(directory) / "docs/applied-ai-rig/DECISIONS.md").unlink()
+
+            status = self.run_cli("status", directory)
+
+        self.assertEqual(install.returncode, 0, install.stderr)
+        self.assertEqual(status.returncode, 1, status.stderr)
+        self.assertIn("Structural health: needs attention", status.stdout)
+        self.assertIn("Generated file is missing", status.stdout)
+
+    def test_status_on_a_missing_installation_is_actionable(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            result = self.run_cli("status", directory)
+
+        self.assertEqual(result.returncode, 2)
+        self.assertIn("not installed", result.stderr)
+
+    def test_status_reports_partial_metadata_as_structurally_broken(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            metadata = Path(directory) / ".applied-ai-rig"
+            metadata.mkdir()
+            (metadata / "profile.json").write_text("{}\n", encoding="utf-8")
+
+            result = self.run_cli("status", directory)
+
+        self.assertEqual(result.returncode, 1, result.stderr)
+        self.assertIn("manifest.json is missing", result.stdout)
+
+    def test_legacy_targets_named_status_or_add_still_install(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            for target_name in ("status", "add"):
+                with self.subTest(target=target_name):
+                    result = subprocess.run(
+                        [
+                            sys.executable,
+                            str(ROOT / "init.py"),
+                            target_name,
+                            "--modules",
+                            "none",
+                            "--non-interactive",
+                        ],
+                        cwd=directory,
+                        capture_output=True,
+                        text=True,
+                        check=False,
+                    )
+
+                    installed = (
+                        Path(directory) / target_name / ".applied-ai-rig/manifest.json"
+                    ).is_file()
+
+                    self.assertEqual(result.returncode, 0, result.stderr)
+                    self.assertTrue(installed)
+
+    def test_status_without_target_uses_the_current_installed_project(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            install = self.run_cli(directory, "--modules", "none", "--non-interactive")
+            status = subprocess.run(
+                [sys.executable, str(ROOT / "init.py"), "status"],
+                cwd=directory,
+                capture_output=True,
+                text=True,
+                check=False,
+            )
+
+        self.assertEqual(install.returncode, 0, install.stderr)
+        self.assertEqual(status.returncode, 0, status.stderr)
+        self.assertIn("Applied AI Rig status", status.stdout)
+
     def test_add_decision_previews_by_default_and_writes_with_yes(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
             install = self.run_cli(directory, "--modules", "none", "--non-interactive")
@@ -150,6 +221,16 @@ class CliSmokeTests(unittest.TestCase):
                 "Choose the initial model",
                 "--yes",
             )
+            duplicate = self.run_cli(
+                "add",
+                "decision",
+                directory,
+                "--id",
+                "DEC-20260716-model-choice",
+                "--title",
+                "Choose another model",
+                "--yes",
+            )
             final = path.read_text(encoding="utf-8")
 
         self.assertEqual(install.returncode, 0, install.stderr)
@@ -160,6 +241,74 @@ class CliSmokeTests(unittest.TestCase):
         self.assertEqual(write.returncode, 0, write.stderr)
         self.assertIn("Added DEC-20260716-model-choice", write.stdout)
         self.assertIn("DEC-20260716-model-choice", final)
+        self.assertEqual(duplicate.returncode, 2)
+        self.assertIn("already exists", duplicate.stderr)
+
+    def test_add_decision_cannot_create_an_accepted_empty_skeleton(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            install = self.run_cli(directory, "--modules", "none", "--non-interactive")
+            result = self.run_cli(
+                "add",
+                "decision",
+                directory,
+                "--id",
+                "DEC-001",
+                "--title",
+                "Choose a model",
+                "--status",
+                "accepted",
+                "--yes",
+            )
+
+        self.assertEqual(install.returncode, 0, install.stderr)
+        self.assertEqual(result.returncode, 2)
+        self.assertIn("unrecognized arguments", result.stderr)
+
+    def test_add_evidence_and_experiment_write_the_reviewed_records(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            install = self.run_cli(directory, "--modules", "evaluation", "--non-interactive")
+            decision = self.run_cli(
+                "add", "decision", directory, "--id", "DEC-001", "--title", "Choose a model", "--yes"
+            )
+            evidence = self.run_cli(
+                "add",
+                "evidence",
+                directory,
+                "--id",
+                "EVD-001",
+                "--claim",
+                "Candidate passed",
+                "--decision",
+                "DEC-001",
+                "--status",
+                "measured",
+                "--yes",
+            )
+            experiment = self.run_cli(
+                "add",
+                "experiment",
+                directory,
+                "--run-id",
+                "RUN-001",
+                "--decision",
+                "DEC-001",
+                "--model",
+                "model-a",
+                "--metric",
+                "accuracy",
+                "--value",
+                "0.91",
+                "--yes",
+            )
+            evidence_content = (Path(directory) / "docs/applied-ai-rig/EVIDENCE.md").read_text(encoding="utf-8")
+            experiment_content = (
+                Path(directory) / "docs/applied-ai-rig/modules/evaluation/experiments.csv"
+            ).read_text(encoding="utf-8")
+
+        for result in (install, decision, evidence, experiment):
+            self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertIn("EVD-001", evidence_content)
+        self.assertIn("RUN-001", experiment_content)
 
     def test_add_experiment_explains_when_module_is_missing(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
