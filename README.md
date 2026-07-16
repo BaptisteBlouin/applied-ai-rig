@@ -183,5 +183,4 @@ mypy                                         # strict type check (configured in 
 
 Tests run on Linux, macOS, and Windows against Python 3.10 and 3.13.
 
-The approved V1 requirements are in [the specification](docs/spec.md), with implementation sequencing in
-[the plan](tasks/plan.md).
+The V1 specification, design explorations, and task history live on the [`v1`](../../tree/v1) branch.

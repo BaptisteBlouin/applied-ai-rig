@@ -1,7 +1,7 @@
 # Contributing
 
-Applied AI Rig is developed from the requirements in `docs/spec.md` and the dependency-ordered work in
-`tasks/todo.md`.
+Applied AI Rig is developed from the requirements and dependency-ordered task history kept on the `v1`
+branch (`docs/spec.md` and `tasks/todo.md`).
 
 Before proposing a change:
 
